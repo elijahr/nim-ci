@@ -53,20 +53,21 @@ jobs:
       #       bin/*
       #   if: ${{ github.event_name == "tags" }}
 
-  build-linux-arm64:
-    name: Build ubuntu-latest arm64
+  build-linux-other-archs:
+    name: Build ubuntu-latest ${{ matrix.arch }}
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         nim_version: [ devel ]
+        arch: [aarch64] #, ppc64le]
 
     steps:
-      - name: Build arm64
-        id: build_arm64
+      - name: Build ${{ matrix.arch }}
+        id: build_arch
         uses: uraimo/run-on-arch-action@v1.1.0
         with:
-          architecture: aarch64
+          architecture: ${{ matrix.arch }}
           # TODO - use alpine, its smaller?
           distribution: ubuntu18.04
           run: |
@@ -81,7 +82,7 @@ jobs:
 
             # Install nim
             export NIM_VERSION=${{ matrix.nim_version }}
-            export CPU_ARCH=arm64
+            export CPU_ARCH=${{ matrix.arch }}
             export OS_NAME=linux
             curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh -LsSf -o install_nim.sh
             source install_nim.sh
@@ -100,11 +101,11 @@ jobs:
 
       - name: Reconstruct binaries
         run: |
-          cat << EOF > example_arm64
-          ${{ steps.build_arm64.outputs.binary }}
+          cat << EOF > example_${{ matrix.arch }}
+          ${{ steps.build_arch.outputs.binary }}
           EOF
-          chmod +x example_arm64
-          ./example_arm64
+          chmod +x example_${{ matrix.arch }}
+          ./example_${{ matrix.arch }}
 
       # - name: Upload binaries for arm64
       #   uses: actions/upload-artifact@v2
