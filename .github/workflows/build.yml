@@ -33,14 +33,16 @@ jobs:
           OS_NAME: ${{ matrix.os }}
 
         run: |
-          curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh -LsSf -o install_nim.sh
+          curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/scripts/install_nim.sh -LsSf -o install_nim.sh
           source install_nim.sh
 
-      - name: Install dependencies
-        run: nimble install -y -d
+      - name: Install & build
+        run: |
+          nimble install -y -d
 
       - name: Build binary
-        run: nimble build
+        run: |
+          nimble build
 
       - name: Run tests
         run: nimble test
@@ -67,44 +69,21 @@ jobs:
         uses: uraimo/run-on-arch-action@v1.1.0
         with:
           architecture: ${{ matrix.arch }}
-          # TODO - use alpine, its lighter?
           distribution: ubuntu18.04
           run: |
-            set -ex
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update -q
-            apt-get install -q -y build-essential git curl
+            curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/scripts/run_ubuntu.sh -LsSf -o run_ubuntu.sh
+            source run_ubuntu.sh
 
-            # Checkout repo
-            git clone -b $GITHUB_REF --single-branch "https://github.com/${GITHUB_REPOSITORY}.git" repo
-            cd repo
-
-            # Install nim
-            export NIM_VERSION=${{ matrix.nim_version }}
-            export CPU_ARCH=${{ matrix.arch }}
-            export OS_NAME=linux
-            curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh -LsSf -o install_nim.sh
-            source install_nim.sh
-
-            # Install dependencies
-            nimble install -y -d
-
-            # Build bin/example
-            nimble build
-
-            # Run tests
-            nimble test
-
-            # Export bin/example contents as variable
-            echo ::set-output name=binary::$(cat bin/example)
-
-      - name: Reconstruct binaries
+      - name: Reconstruct binary
         run: |
-          cat << EOF > example_${{ matrix.arch }}
-          ${{ steps.build_arch.outputs.binary }}
-          EOF
-          chmod +x example_${{ matrix.arch }}
-          ./example_${{ matrix.arch }}
+          if [[ ! -z "${{ steps.build_arch.outputs.binary_name }}" ]]
+          then
+            cat << EOF > ${{ steps.build_arch.outputs.binary_name }}_${{ matrix.arch }}
+            ${{ steps.build_arch.outputs.binary }}
+            EOF
+            chmod +x ${{ steps.build_arch.outputs.binary_name }}_${{ matrix.arch }}
+            ./${{ steps.build_arch.outputs.binary_name }}_${{ matrix.arch }}
+          fi
 
       # - name: Upload binaries for arm64
       #   uses: actions/upload-artifact@v2

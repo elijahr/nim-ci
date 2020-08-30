@@ -2,12 +2,12 @@ import strutils
 
 # Package
 version       = "0.1.0"
-author        = "me"
-description   = "stuff"
-license       = "MIT"
+author        = "test"
+description   = "test"
+license       = "test"
 srcDir        = "src"
 binDir        = "bin"
-bin           = @["example"]
+bin           = @["test"]
 
 # Dependencies
 requires "nim >= 1.2.4"
