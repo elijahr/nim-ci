@@ -3,7 +3,7 @@
 set -ex
 
 # Use nim stable if NIM_VERSION/BRANCH not set
-if [[ -z "$NIM_VERSION"]]
+if [[ -z "$NIM_VERSION" ]]
 then
   if [[ -z "$BRANCH" ]]
   then
