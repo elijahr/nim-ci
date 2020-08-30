@@ -36,6 +36,7 @@ jobs:
 
         run: |
           curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh?asd -LsSf -o install_nim.sh
+          cat install_nim.sh
           source install_nim.sh
           echo '::add-path::${{ github.workspace }}/nim/bin'
 
