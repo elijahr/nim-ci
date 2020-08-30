@@ -69,13 +69,14 @@ jobs:
           # TODO - use alpine, its smaller?
           distribution: ubuntu18.04
           run: |
+            set -ex
             export NIM_VERSION=${{ matrix.nim_version }}
             export CPU_ARCH=arm64
             export OS_NAME=linux
 
             export DEBIAN_FRONTEND=noninteractive
             apt-get update -q
-            apt-get install -q -y build-essential
+            apt-get install -q -y build-essential git curl
 
             curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh?asd -LsSf -o install_nim.sh
             cat install_nim.sh
