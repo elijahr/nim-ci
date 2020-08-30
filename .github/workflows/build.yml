@@ -1,4 +1,4 @@
-name: Build
+name: Build ${{ matrix.os }}_${{ matrix.arch }}
 
 on:
   push:
@@ -13,8 +13,10 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [x86, x64, x64_arm64]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        # arch: [x86, x64, x64_arm64]
+        os: [ubuntu-latest]
+        arch: [x64_arm64]
 
     steps:
       - name: Clone repo
@@ -38,11 +40,13 @@ jobs:
           curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh?asd -LsSf -o install_nim.sh
           cat install_nim.sh
           source install_nim.sh
-          echo '::add-path::${{ github.workspace }}/nim/bin'
 
-      - name: Run tests for ${{ matrix.arch }}
+      - name: Install dependencies
         run: |
           nimble install -y -d
+
+      - name: Run tests
+        run: |
           nimble test
 
       # - name: Upload binaries for ${{ matrix.arch }}

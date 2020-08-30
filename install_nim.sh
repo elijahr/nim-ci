@@ -79,6 +79,7 @@ download_nightly() {
     tar -xf $NIGHTLY_ARCHIVE -C $HOME/Nim-devel --strip-components=1
     rm $NIGHTLY_ARCHIVE
     export PATH="$HOME/Nim-devel/bin:$PATH"
+    echo "::add-path::$HOME/Nim-devel/bin" # Github Workflows
     echo "Installed nightly build $NIGHTLY_DOWNLOAD_URL"
     return 1
   fi
@@ -109,6 +110,7 @@ build_nim () {
   fi
 
   export PATH=$NIMREPO/bin:$PATH
+  echo "::add-path::$NIMREPO/bin" # Github Workflows
 
   if [[ -f "$NIMREPO/bin/nim" ]]
   then
@@ -134,6 +136,9 @@ use_choosenim () {
   export CHOOSENIM_CHOOSE_VERSION="$NIM_VERSION --latest"
   export CHOOSENIM_NO_ANALYTICS=1
   export PATH=$HOME/.nimble/bin:$GITBIN:$PATH
+  echo "::add-path::$GITBIN" # Github Workflows
+  echo "::add-path::$HOME/.nimble/bin" # Github Workflows
+
   if ! type -P choosenim &> /dev/null
   then
     echo "Installing choosenim"
