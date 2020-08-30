@@ -43,9 +43,15 @@ cache:
     - "$HOME/.choosenim" # cache nim binaries
 
 install:
-  - curl https://raw.githubusercontent.com/elijahr/nim-ci/master/install_nim.sh -LsSf -o install_nim.sh
-  - source install_nim.sh
+  # Set up environment with CI convenience functions and install nim
+  - source `curl https://raw.githubusercontent.com/elijahr/nim-ci/master/nim-ci.sh -LsSf`
+  - install_nim
 
 script:
-  - nimble develop -y
+  # nimble build or nimble install your project.
+  # autodetects which depending on if your project's nimble config exports a bin or not.
+  - install_or_build_nim_project
+
+  # Run unit tests
+  - cd_to_nim_project
   - nimble test

@@ -8,6 +8,7 @@ on:
     branches: [ '*' ]
 
 jobs:
+  # Build for amd64
   build:
     name: Build ${{ matrix.os }} amd64
     runs-on: ${{ matrix.os }}
@@ -25,27 +26,34 @@ jobs:
           fetch-depth: 1
           submodules: recursive
 
-      - name: Install nim
-        shell: bash
+      - name: Setup cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.choosenim
+            ~/.nimble
+          key: ${{ runner.os }}
+
+      - name: Install & build
+        shell: sh
         env:
           NIM_VERSION: ${{ matrix.nim_version }}
           CPU_ARCH: amd64
           OS_NAME: ${{ matrix.os }}
-
         run: |
-          curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/scripts/install_nim.sh -LsSf -o install_nim.sh
-          source install_nim.sh
+          # Install nim and nim-ci functions
+          source `curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/scripts/install_nim.sh -LsSf`
 
-      - name: Install & build
-        run: |
-          nimble install -y -d
+          # If this nim project is a library, install it.
+          # If this nim project exports an executable binary, build it.
+          install_or_build_nim_project
 
-      - name: Build binary
-        run: |
-          nimble build
+          # Run unit tests
+          cd_to_nim_project
+          nimble test
 
-      - name: Run tests
-        run: nimble test
+          # If this nim project exports an executable binary, export it. No-op for library projects.
+          export_exe_artifact
 
       # - name: Upload binaries for ${{ matrix.arch }}
       #   uses: actions/upload-artifact@v2
@@ -54,6 +62,7 @@ jobs:
       #       bin/*
       #   if: ${{ github.event_name == "tags" }}
 
+  # Build for Linux aarch64 (arm64), ppc64le, etc
   build-linux-other-archs:
     name: Build ubuntu-latest ${{ matrix.arch }}
     runs-on: ubuntu-latest
@@ -64,30 +73,73 @@ jobs:
         arch: [aarch64] #, ppc64le]
 
     steps:
+      # Use the run-on-arch-action action to run a docker emulating the
+      # requested CPU architecture.
+      # See https://github.com/uraimo/run-on-arch-action for docs.
       - name: Build ${{ matrix.arch }}
         id: build_arch
         uses: uraimo/run-on-arch-action@v1.1.0
         with:
           architecture: ${{ matrix.arch }}
-          distribution: ubuntu18.04
+          distribution: alpine_latest
           run: |
-            curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/scripts/run_ubuntu.sh -LsSf -o run_ubuntu.sh
-            source run_ubuntu.sh
+            # Install system packages
+            case "${{ matrix.os }}" in
+              alpine*)
+                apk add --update g++ make git curl
+                ;;
+              stretch|buster|ubuntu*)
+                # debian or debian-based
+                export DEBIAN_FRONTEND=noninteractive
+                apt-get update -q
+                apt-get install -q -y build-essential git curl
+                ;;
+            esac
 
-      - name: Reconstruct binary
+            # Checkout repo
+            ref=`basename $GITHUB_REF`
+            git clone -b $ref --single-branch "https://github.com/${GITHUB_REPOSITORY}.git"
+
+            # Setup vars for nim-ci.sh
+            export \
+              NIM_VERSION=${{ matrix.nim_version }} \
+              CPU_ARCH=${{ matrix.arch }} \
+              OS_NAME=linux \
+
+            # Install nim and nim-ci functions
+            source `curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/scripts/install_nim.sh -LsSf`
+
+            # If this nim project is a library, install it.
+            # If this nim project exports an executable binary, build it.
+            install_or_build_nim_project
+
+            # Run unit tests
+            cd_to_nim_project
+            nimble test
+
+            # If this nim project exports an executable binary, export it.
+            # No-op for library projects.
+            export_exe_artifact
+
+      # export_exe_artifact in the previous step stores the executable's
+      # filename in exe_name, and the compressed executable's data in exe_gz.
+      # Use those values to reconstruct the executable in the parent container.
+      # This is a no-op for library projects.
+      - name: Construct executable
+        env:
+          EXE_NAME: ${{ steps.build_arch.outputs.exe_name }}
+          EXE_GZ: ${{ steps.build_arch.outputs.exe_gz }}
         run: |
-          if [[ ! -z "${{ steps.build_arch.outputs.binary_name }}" ]]
+          if [[ ! -z "$EXE_NAME" ]]
           then
-            cat << EOF > ${{ steps.build_arch.outputs.binary_name }}_${{ matrix.arch }}
-            ${{ steps.build_arch.outputs.binary }}
-            EOF
-            chmod +x ${{ steps.build_arch.outputs.binary_name }}_${{ matrix.arch }}
-            ./${{ steps.build_arch.outputs.binary_name }}_${{ matrix.arch }}
+            mkdir -p bin
+            echo "$EXE_GZ" > bin/$EXE_NAME
+            chmod +x bin/$EXE_NAME
           fi
 
-      # - name: Upload binaries for arm64
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     path: |
-      #       bin/*
-      #   if: ${{ github.event_name == "tags" }}
+      - name: Upload binaries for ${{ matrix.arch }}
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            bin/*
+        if: ${{ github.event_name == "tags" }}
