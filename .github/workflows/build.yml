@@ -88,7 +88,9 @@ jobs:
 
       - name: Cat binaries
         run: |
-          echo ${{ steps.build_arm64.outputs.foo }} > foo.tar.gz
+          cat << EOF > foo.tar.gz
+          ${{ steps.build_arm64.outputs.foo }}
+          EOF
           tar xzf foo.tar.gz
           cat foo/bar.txt
 
