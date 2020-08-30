@@ -2,27 +2,38 @@
 
 set -ex
 
-# Use nim stable if NIM_VERSION/BRANCH not set
+# Use nim stable if NIM_VERSION not set.
 if [[ -z "$NIM_VERSION" ]]
 then
   if [[ -z "$BRANCH" ]]
   then
     export NIM_VERSION=stable
   else
+    # fallback to old env var name BRANCH
     export NIM_VERSION="$BRANCH"
   fi
 fi
 
 add_path () {
-  export PATH=$1:$PATH
-  echo "::add-path::$1" # Github Actions
+  # Add an entry to PATH
+  export PATH="$1:$PATH"
+  echo "::add-path::$1" # Github Actions syntax for adding to path
 }
 
 normalize_cpu_arch() {
+  # Normalize the CPU_ARCH env var to match nim's system.hostCPU values.
+  # If CPU_ARCH is not provided, the architecture is inferred.
+  # CPU_ARCH becomes one of:
+  # * i386
+  # * amd64
+  # * arm64
+  # * arm
+  # * ppc64le
+
   if [[ ! -z "$TRAVIS_CPU_ARCH" ]]
   then
-    # Travis
-    export CPU_ARCH="$TRAVIS_CPU_ARCH" # one of amd64, arm64, ppc64le
+    # Travis supplies TRAVIS_CPU_ARCH as one of amd64, arm64, ppc64le
+    export CPU_ARCH="$TRAVIS_CPU_ARCH"
   fi
 
   if [[ -z "$CPU_ARCH" ]]
@@ -42,10 +53,17 @@ normalize_cpu_arch() {
 }
 
 normalize_os_name () {
+  # Normalize the OS_NAME env var to match nim's system.hostOS values.
+  # If OS_NAME is not provided, the OS is inferred.
+  # OS_NAME becomes one of:
+  # * linux
+  # * macosx
+  # * windows
+
   if [[ ! -z "$TRAVIS_OS_NAME" ]]
   then
-    # Travis
-    export OS_NAME="$TRAVIS_OS_NAME" # one of linux, macosx, windows
+    # Travis supplies TRAVIS_OS_NAME as one of linux, osx, windows
+    export OS_NAME="$TRAVIS_OS_NAME"
   fi
 
   if [[ -z "$OS_NAME" ]]
@@ -63,6 +81,7 @@ normalize_os_name () {
 }
 
 download_nightly() {
+  # Try to download a nightly nim build from https://github.com/nim-lang/nightlies/releases
   if [[ "$OS_NAME" == "linux" ]]
   then
     if [[ "$CPU_ARCH" == "amd64" ]]
@@ -72,7 +91,7 @@ download_nightly() {
       # linux_arm64, etc
       local SUFFIX="linux_${CPU_ARCH}\.tar\.xz"
     fi
-  elif [[ "$OS_NAME" == "osx" ]]
+  elif [[ "$OS_NAME" == "macosx" ]]
   then
     if [[ "$CPU_ARCH" == "amd64" ]]
     then
@@ -122,11 +141,12 @@ download_nightly() {
 }
 
 build_nim () {
+  # Build nim from scratch, sans choosenim
   if [[ "$NIM_VERSION" == "devel" ]]
   then
     if [[ "$BUILD_NIM" != 1 ]]
     then
-      # If not forcing build, download nightly build
+      # If not forcing build, try downloading nightly build
       download_nightly
       local DOWNLOADED=$?
       if [[ "$DOWNLOADED" == "1" ]]
@@ -163,6 +183,7 @@ build_nim () {
 }
 
 use_choosenim () {
+  # Using choosenim, install a nim binary or build nim from scratch
   local GITBIN=$HOME/.choosenim/git/bin
   export CHOOSENIM_CHOOSE_VERSION="$NIM_VERSION --latest"
   export CHOOSENIM_NO_ANALYTICS=1
@@ -206,10 +227,9 @@ main () {
   normalize_os_name
   normalize_cpu_arch
 
-  echo "CPU_ARCH=$CPU_ARCH"
-  echo "OS_NAME=$OS_NAME"
+  echo "Platform is ${OS_NAME}_${CPU_ARCH}"
 
-  if [[ "$OS_NAME" == "osx" ]]
+  if [[ "$OS_NAME" == "macosx" ]]
   then
     # Work around https://github.com/nim-lang/Nim/issues/12337 fixed in 1.0+
     ulimit -n 8192

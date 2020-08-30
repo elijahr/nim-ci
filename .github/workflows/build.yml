@@ -19,7 +19,7 @@ jobs:
         nim_version: [ devel ]
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v2
         with:
           fetch-depth: 1
@@ -33,17 +33,18 @@ jobs:
           OS_NAME: ${{ matrix.os }}
 
         run: |
-          curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh?asd -LsSf -o install_nim.sh
-          cat install_nim.sh
+          curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh -LsSf -o install_nim.sh
           source install_nim.sh
 
       - name: Install dependencies
-        run: |
-          nimble install -y -d
+        run: nimble install -y -d
+
+      - name: Build binary
+        run: nimble build
 
       - name: Run tests
-        run: |
-          nimble test
+        run: nimble test
+
 
       # - name: Upload binaries for ${{ matrix.arch }}
       #   uses: actions/upload-artifact@v2
@@ -53,7 +54,7 @@ jobs:
       #   if: ${{ github.event_name == "tags" }}
 
   build-linux-arm64:
-    name: Build Linux arm64
+    name: Build ubuntu-latest arm64
     runs-on: ubuntu-latest
 
     strategy:
@@ -70,30 +71,40 @@ jobs:
           distribution: ubuntu18.04
           run: |
             set -ex
-            export NIM_VERSION=${{ matrix.nim_version }}
-            export CPU_ARCH=arm64
-            export OS_NAME=linux
-
             export DEBIAN_FRONTEND=noninteractive
             apt-get update -q
             apt-get install -q -y build-essential git curl
 
-            curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh?asd -LsSf -o install_nim.sh
-            cat install_nim.sh
+            # Checkout repo
+            git clone -b $GITHUB_REF --single-branch "{$GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" repo
+            cd repo
+
+            # Install nim
+            export NIM_VERSION=${{ matrix.nim_version }}
+            export CPU_ARCH=arm64
+            export OS_NAME=linux
+            curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh -LsSf -o install_nim.sh
             source install_nim.sh
 
-            mkdir foo
-            echo "baz" >> foo/bar.txt
-            tar czf foo.tar.gz foo
-            echo ::set-output name=foo::$(cat foo.tar.gz)
+            # Install dependencies
+            nimble install -y -d
 
-      - name: Cat binaries
+            # Build binary
+            nimble build
+
+            # Run tests
+            nimble test
+
+            # Export binary contents as variable
+            echo ::set-output name=binary::$(cat bin/example)
+
+      - name: Reconstruct binaries
         run: |
-          cat << EOF > foo.tar.gz
-          ${{ steps.build_arm64.outputs.foo }}
+          cat << EOF > example_arm64
+          ${{ steps.build_arm64.outputs.binary }}
           EOF
-          tar xzf foo.tar.gz
-          cat foo/bar.txt
+          chmod +x example_arm64
+          ./example_arm64
 
       # - name: Upload binaries for arm64
       #   uses: actions/upload-artifact@v2

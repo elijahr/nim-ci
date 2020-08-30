@@ -1,0 +1,3 @@
+
+if isMainModule:
+  echo "example"
