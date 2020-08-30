@@ -54,46 +54,47 @@ jobs:
 
   build-linux-arm64:
     name: Build Linux arm64
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
         nim_version: [ devel ]
 
-    - name: Build arm64
-      id: build_arm64
-      uses: uraimo/run-on-arch-action@v1.1.0
-      with:
-        architecture: aarch64
-        # TODO - use alpine, its smaller?
-        distribution: ubuntu18.04
+    steps:
+      - name: Build arm64
+        id: build_arm64
+        uses: uraimo/run-on-arch-action@v1.1.0
+        with:
+          architecture: aarch64
+          # TODO - use alpine, its smaller?
+          distribution: ubuntu18.04
+          run: |
+            export NIM_VERSION=${{ matrix.nim_version }}
+            export CPU_ARCH=arm64
+            export OS_NAME=linux
+
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -q
+            apt-get install -q -y build-essential
+
+            curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh?asd -LsSf -o install_nim.sh
+            cat install_nim.sh
+            source install_nim.sh
+
+            mkdir foo
+            echo "baz" >> foo/bar.txt
+            tar czf foo.tar.gz foo
+            echo ::set-output name=foo::$(cat foo.tar.gz)
+
+      - name: Cat binaries
         run: |
-          export NIM_VERSION=${{ matrix.nim_version }}
-          export CPU_ARCH=arm64
-          export OS_NAME=linux
+          echo ${{ steps.build_arm64.outputs.foo }} > foo.tar.gz
+          tar xzf foo.tar.gz
+          cat foo/bar.txt
 
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update -q
-          apt-get install -q -y build-essential
-
-          curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh?asd -LsSf -o install_nim.sh
-          cat install_nim.sh
-          source install_nim.sh
-
-          mkdir foo
-          echo "baz" >> foo/bar.txt
-          tar czf foo.tar.gz foo
-          echo ::set-output name=foo::$(cat foo.tar.gz)
-
-    - name: Cat binaries
-      run: |
-        echo ${{ steps.build_arm64.outputs.foo }} > foo.tar.gz
-        tar xzf foo.tar.gz
-        cat foo/bar.txt
-
-    # - name: Upload binaries for arm64
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     path: |
-    #       bin/*
-    #   if: ${{ github.event_name == "tags" }}
+      # - name: Upload binaries for arm64
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     path: |
+      #       bin/*
+      #   if: ${{ github.event_name == "tags" }}
