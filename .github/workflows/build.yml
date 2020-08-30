@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  push:
+    branches: [ * ]
+    tags: [ *]
+  pull_request:
+    branches: [ * ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: [x86, x64, x64_arm64]
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      # - name: Checkout pull request HEAD
+      #   run: git checkout HEAD^2
+      #   if: ${{ github.event_name == 'pull_request' }}
+
+      - name: Install nim
+        shell: bash
+        env:
+          - NIM_VERSION=devel
+          - GITHUB_OS_NAME=${{ matrix.os }}
+          - GITHUB_CPU_ARCH=${{ matrix.arch }}
+        run: |
+          curl https://raw.githubusercontent.com/elijahr/nim-ci/master/install_nim.sh -LsSf -o install_nim.sh
+          source install_nim.sh
+          echo '::add-path::${{ github.workspace }}/nim/bin'
+
+      - name: Run tests for ${{ matrix.arch }}
+        run: |
+          nimble install -y -d
+          nimble test
+
+      # - name: Upload binaries for ${{ matrix.arch }}
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     path: |
+      #       bin/*
+      #   if: ${{ github.event_name == "tags" }}

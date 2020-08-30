@@ -1,32 +1,53 @@
 #!/bin/bash
 
-# Use nim stable if BRANCH not set
-if [[ -z "$BRANCH" ]]
+set -ex
+
+# Use nim stable if NIM_VERSION/BRANCH not set
+if [[ -z "$NIM_VERSION"]]
 then
-  export BRANCH=stable
+  if [[ -z "$BRANCH" ]]
+  then
+    export NIM_VERSION=stable
+  else
+    export NIM_VERSION=$BRANCH
+  fi
 fi
 
+# Detect if Travis, Github Workflows, etc
+if [[ ! -z "$TRAVIS_CPU_ARCH" ]]
+then
+  export CPU_ARCH=$TRAVIS_CPU_ARCH # amd64, arm64, ppc64le
+  export OS_NAME=$TRAVIS_OS_NAME # windows, macosx, linux
+elif [[ ! -z "$GITHUB_CPU_ARCH" ]]
+then
+  export CPU_ARCH=$GITHUB_CPU_ARCH
+  export OS_NAME=$GITHUB_OS_NAME
+fi
+
+echo "CPU_ARCH=$CPU_ARCH"
+echo "OS_NAME=$OS_NAME"
+
 download_nightly() {
-  if [[ "$TRAVIS_OS_NAME" == "linux" ]]
+  if [[ "$OS_NAME" == "linux" ]]
   then
-    if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]
+    if [[ "$CPU_ARCH" == "amd64" ]]
     then
       local SUFFIX="linux_x64\.tar\.xz"
     else
       # linux_arm64, etc
-      local SUFFIX="linux_${TRAVIS_CPU_ARCH}\.tar\.xz"
+      local SUFFIX="linux_${CPU_ARCH}\.tar\.xz"
     fi
-  elif [[ "$TRAVIS_OS_NAME" == "osx" ]]
+  elif [[ "$OS_NAME" == "osx" ]]
   then
-    if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]
+    if [[ "$CPU_ARCH" == "amd64" ]]
     then
       # Used to be osx.tar.xz, now is macosx_x64.tar.xz
       local SUFFIX="macosx_x64\.tar\.xz"
     else
       # macosx_arm64, perhaps someday
-      local SUFFIX="macosx_${TRAVIS_CPU_ARCH}\.tar\.xz"
+      local SUFFIX="macosx_${CPU_ARCH}\.tar\.xz"
     fi
-  elif [[ "$TRAVIS_OS_NAME" == "windows" ]]
+  elif [[ "$OS_NAME" == "windows" ]]
   then
     local SUFFIX="windows_x64\.zip"
   fi
@@ -48,7 +69,7 @@ download_nightly() {
     local NIGHTLY_ARCHIVE=$(basename $NIGHTLY_DOWNLOAD_URL)
     curl $NIGHTLY_DOWNLOAD_URL -SsLf > $NIGHTLY_ARCHIVE
   else
-    echo "No nightly build available for $TRAVIS_OS_NAME $TRAVIS_CPU_ARCH"
+    echo "No nightly build available for $OS_NAME $CPU_ARCH"
   fi
 
   if [[ ! -z "$NIGHTLY_ARCHIVE" && -f "$NIGHTLY_ARCHIVE" ]]
@@ -84,7 +105,7 @@ build_nim () {
     local NIMREPO=$HOME/Nim-devel
   else
     # Not actually using choosenim, but cache in same location.
-    local NIMREPO=$HOME/.choosenim/toolchains/nim-$BRANCH-$TRAVIS_CPU_ARCH
+    local NIMREPO=$HOME/.choosenim/toolchains/nim-$BRANCH-$CPU_ARCH
   fi
 
   export PATH=$NIMREPO/bin:$PATH
@@ -118,7 +139,7 @@ use_choosenim () {
     echo "Installing choosenim"
 
     mkdir -p $GITBIN
-    if [[ "$TRAVIS_OS_NAME" == "windows" ]]
+    if [[ "$OS_NAME" == "windows" ]]
     then
       export EXT=.exe
       # Setup git outside "Program Files", space breaks cmake sh.exe
@@ -133,7 +154,7 @@ use_choosenim () {
     cp $HOME/.nimble/bin/choosenim$EXT $GITBIN/.
 
     # Copy DLLs for choosenim
-    if [[ "$TRAVIS_OS_NAME" == "windows" ]]
+    if [[ "$OS_NAME" == "windows" ]]
     then
       cp $HOME/.nimble/bin/*.dll $GITBIN/.
     fi
@@ -145,7 +166,7 @@ use_choosenim () {
   fi
 }
 
-if [[ "$TRAVIS_OS_NAME" == "osx" ]]
+if [[ "$OS_NAME" == "osx" ]]
 then
   # Work around https://github.com/nim-lang/Nim/issues/12337 fixed in 1.0+
   ulimit -n 8192
@@ -154,7 +175,7 @@ fi
 # Autodetect whether to build nim or use choosenim, based on architecture.
 # Force nim build with BUILD_NIM=1
 # Force choosenim with USE_CHOOSENIM=1
-if [[ ( "$TRAVIS_CPU_ARCH" != "amd64" || "$BUILD_NIM" == "1" ) && "$USE_CHOOSENIM" != "1" ]]
+if [[ ( "$CPU_ARCH" != "amd64" || "$BUILD_NIM" == "1" ) && "$USE_CHOOSENIM" != "1" ]]
 then
   build_nim
 else

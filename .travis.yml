@@ -43,8 +43,8 @@ cache:
     - "$HOME/.choosenim" # cache nim binaries
 
 install:
-  - curl https://raw.githubusercontent.com/genotrance/nim-travis/master/travis.sh -LsSf -o travis.sh
-  - source travis.sh
+  - curl https://raw.githubusercontent.com/elijahr/nim-ci/master/install_nim.sh -LsSf -o install_nim.sh
+  - source install_nim.sh
 
 script:
   - nimble develop -y
