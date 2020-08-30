@@ -18,10 +18,10 @@ if [[ ! -z "$TRAVIS_CPU_ARCH" ]]
 then
   export CPU_ARCH=$TRAVIS_CPU_ARCH # amd64, arm64, ppc64le
   export OS_NAME=$TRAVIS_OS_NAME # windows, macosx, linux
-elif [[ ! -z "$GITHUB_CPU_ARCH" ]]
+elif [[ ! -z "$GITHUB_WORKFLOW" ]]
 then
-  export CPU_ARCH=$GITHUB_CPU_ARCH
-  export OS_NAME=$GITHUB_OS_NAME
+  export CPU_ARCH=$GH_CPU_ARCH
+  export OS_NAME=$GH_OS_NAME
 fi
 
 echo "CPU_ARCH=$CPU_ARCH"

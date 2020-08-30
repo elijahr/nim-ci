@@ -30,9 +30,10 @@ jobs:
       - name: Install nim
         shell: bash
         env:
-          - NIM_VERSION=devel
-          - GITHUB_OS_NAME=${{ matrix.os }}
-          - GITHUB_CPU_ARCH=${{ matrix.arch }}
+          NIM_VERSION: devel
+          GH_OS_NAME: ${{ matrix.os }}
+          GH_CPU_ARCH: ${{ matrix.arch }}
+
         run: |
           curl https://raw.githubusercontent.com/elijahr/nim-ci/master/install_nim.sh -LsSf -o install_nim.sh
           source install_nim.sh
