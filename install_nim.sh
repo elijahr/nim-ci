@@ -88,7 +88,7 @@ download_nightly() {
 
 
 build_nim () {
-  if [[ "$BRANCH" == "devel" ]]
+  if [[ "$NIM_VERSION" == "devel" ]]
   then
     if [[ "$BUILD_NIM" != 1 ]]
     then
@@ -105,7 +105,7 @@ build_nim () {
     local NIMREPO=$HOME/Nim-devel
   else
     # Not actually using choosenim, but cache in same location.
-    local NIMREPO=$HOME/.choosenim/toolchains/nim-$BRANCH-$CPU_ARCH
+    local NIMREPO=$HOME/.choosenim/toolchains/nim-$NIM_VERSION-$CPU_ARCH
   fi
 
   export PATH=$NIMREPO/bin:$PATH
@@ -114,12 +114,12 @@ build_nim () {
   then
     echo "Using cached nim $NIMREPO"
   else
-    echo "Building nim $BRANCH"
-    if [[ "$BRANCH" =~ [0-9] ]]
+    echo "Building nim $NIM_VERSION"
+    if [[ "$NIM_VERSION" =~ [0-9] ]]
     then
-      local GITREF="v$BRANCH" # version tag
+      local GITREF="v$NIM_VERSION" # version tag
     else
-      local GITREF=$BRANCH
+      local GITREF=$NIM_VERSION
     fi
     git clone -b $GITREF --single-branch https://github.com/nim-lang/Nim.git $NIMREPO
     cd $NIMREPO
@@ -131,7 +131,7 @@ build_nim () {
 
 use_choosenim () {
   local GITBIN=$HOME/.choosenim/git/bin
-  export CHOOSENIM_CHOOSE_VERSION="$BRANCH --latest"
+  export CHOOSENIM_CHOOSE_VERSION="$NIM_VERSION --latest"
   export CHOOSENIM_NO_ANALYTICS=1
   export PATH=$HOME/.nimble/bin:$GITBIN:$PATH
   if ! type -P choosenim &> /dev/null
@@ -161,8 +161,8 @@ use_choosenim () {
   else
     echo "choosenim already installed"
     rm -rf $HOME/.choosenim/current
-    choosenim update $BRANCH --latest
-    choosenim $BRANCH
+    choosenim update $NIM_VERSION --latest
+    choosenim $NIM_VERSION
   fi
 }
 
