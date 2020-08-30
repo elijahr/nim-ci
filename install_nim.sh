@@ -13,19 +13,54 @@ then
   fi
 fi
 
-# Detect if Travis, Github Workflows, etc
-if [[ ! -z "$TRAVIS_CPU_ARCH" ]]
-then
-  export CPU_ARCH="$TRAVIS_CPU_ARCH" # amd64, arm64, ppc64le
-  export OS_NAME="$TRAVIS_OS_NAME" # windows, macosx, linux
-elif [[ ! -z "$GITHUB_WORKFLOW" ]]
-then
-  export CPU_ARCH="$GH_CPU_ARCH"
-  export OS_NAME="$GH_OS_NAME"
-fi
+add_path () {
+  export PATH=$1:$PATH
+  echo "::add-path::$1" # Github Actions
+}
 
-echo "CPU_ARCH=$CPU_ARCH"
-echo "OS_NAME=$OS_NAME"
+normalize_cpu_arch() {
+  if [[ ! -z "$TRAVIS_CPU_ARCH" ]]
+  then
+    # Travis
+    export CPU_ARCH="$TRAVIS_CPU_ARCH" # one of amd64, arm64, ppc64le
+  fi
+
+  if [[ -z "$CPU_ARCH" ]]
+  then
+    export CPU_ARCH=`uname -m`
+  fi
+
+  export CPU_ARCH=`echo $CPU_ARCH | tr "[:upper:]" "[:lower:]"`
+
+  case $CPU_ARCH in
+    *amd*64* | *x86*64* ) export CPU_ARCH="amd64" ;;
+    *x86* | *i*86* ) export CPU_ARCH="i386" ;;
+    *aarch64*|*arm64* ) export CPU_ARCH="arm64" ;;
+    *arm* ) export CPU_ARCH="arm" ;;
+    *ppc64le* ) export CPU_ARCH="powerpc64el" ;;
+  esac
+}
+
+normalize_os_name () {
+  if [[ ! -z "$TRAVIS_OS_NAME" ]]
+  then
+    # Travis
+    export OS_NAME="$TRAVIS_OS_NAME" # one of linux, macosx, windows
+  fi
+
+  if [[ -z "$OS_NAME" ]]
+  then
+    export OS_NAME=`uname`
+  fi
+
+  export OS_NAME=`echo $OS_NAME | tr "[:upper:]" "[:lower:]"`
+
+  case $OS_NAME in
+    *linux* | *ubuntu* | *alpine* ) export CPU_ARCH="linux" ;;
+    *darwin* | *macos* | *osx* ) export CPU_ARCH="macosx" ;;
+    *mingw* | *msys* | *windows* ) export CPU_ARCH="windows" ;;
+  esac
+}
 
 download_nightly() {
   if [[ "$OS_NAME" == "linux" ]]
@@ -78,15 +113,13 @@ download_nightly() {
     mkdir -p $HOME/Nim-devel
     tar -xf $NIGHTLY_ARCHIVE -C $HOME/Nim-devel --strip-components=1
     rm $NIGHTLY_ARCHIVE
-    export PATH="$HOME/Nim-devel/bin:$PATH"
-    echo "::add-path::$HOME/Nim-devel/bin" # Github Workflows
+    add_path $HOME/Nim-devel/bin
     echo "Installed nightly build $NIGHTLY_DOWNLOAD_URL"
     return 1
   fi
 
   return 0
 }
-
 
 build_nim () {
   if [[ "$NIM_VERSION" == "devel" ]]
@@ -109,8 +142,7 @@ build_nim () {
     local NIMREPO=$HOME/.choosenim/toolchains/nim-$NIM_VERSION-$CPU_ARCH
   fi
 
-  export PATH=$NIMREPO/bin:$PATH
-  echo "::add-path::$NIMREPO/bin" # Github Workflows
+  add_path $NIMREPO/bin
 
   if [[ -f "$NIMREPO/bin/nim" ]]
   then
@@ -130,14 +162,13 @@ build_nim () {
   fi
 }
 
-
 use_choosenim () {
   local GITBIN=$HOME/.choosenim/git/bin
   export CHOOSENIM_CHOOSE_VERSION="$NIM_VERSION --latest"
   export CHOOSENIM_NO_ANALYTICS=1
-  export PATH=$HOME/.nimble/bin:$GITBIN:$PATH
-  echo "::add-path::$GITBIN" # Github Workflows
-  echo "::add-path::$HOME/.nimble/bin" # Github Workflows
+
+  add_path $GITBIN
+  add_path $HOME/.nimble/bin
 
   if ! type -P choosenim &> /dev/null
   then
@@ -171,18 +202,29 @@ use_choosenim () {
   fi
 }
 
-if [[ "$OS_NAME" == "osx" ]]
-then
-  # Work around https://github.com/nim-lang/Nim/issues/12337 fixed in 1.0+
-  ulimit -n 8192
-fi
+main () {
+  normalize_os_name
+  normalize_cpu_arch
 
-# Autodetect whether to build nim or use choosenim, based on architecture.
-# Force nim build with BUILD_NIM=1
-# Force choosenim with USE_CHOOSENIM=1
-if [[ ( "$CPU_ARCH" != "amd64" || "$BUILD_NIM" == "1" ) && "$USE_CHOOSENIM" != "1" ]]
-then
-  build_nim
-else
-  use_choosenim
-fi
+  echo "CPU_ARCH=$CPU_ARCH"
+  echo "OS_NAME=$OS_NAME"
+
+  if [[ "$OS_NAME" == "osx" ]]
+  then
+    # Work around https://github.com/nim-lang/Nim/issues/12337 fixed in 1.0+
+    ulimit -n 8192
+  fi
+
+  # Autodetect whether to build nim or use choosenim, based on architecture.
+  # Force nim build with BUILD_NIM=1
+  # Force choosenim with USE_CHOOSENIM=1
+  if [[ ( "$CPU_ARCH" != "amd64" || "$BUILD_NIM" == "1" ) && "$USE_CHOOSENIM" != "1" ]]
+  then
+    build_nim
+  else
+    use_choosenim
+  fi
+}
+
+main
+

@@ -9,33 +9,28 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.os }}_${{ matrix.arch }}
+    name: Build ${{ matrix.os }} amd64
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         # os: [ubuntu-latest, windows-latest, macos-latest]
-        # arch: [x86, x64, x64_arm64]
-        os: [ubuntu-latest]
-        arch: [x64_arm64]
+        os: [ ubuntu-latest ]
+        nim_version: [ devel ]
 
     steps:
-      - name: Clone repo
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 1
           submodules: recursive
 
-      # - name: Checkout pull request HEAD
-      #   run: git checkout HEAD^2
-      #   if: ${{ github.event_name == 'pull_request' }}
-
       - name: Install nim
         shell: bash
         env:
-          NIM_VERSION: devel
-          GH_OS_NAME: ${{ matrix.os }}
-          GH_CPU_ARCH: ${{ matrix.arch }}
+          NIM_VERSION: ${{ matrix.nim_version }}
+          CPU_ARCH: amd64
+          OS_NAME: ${{ matrix.os }}
 
         run: |
           curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh?asd -LsSf -o install_nim.sh
@@ -56,3 +51,49 @@ jobs:
       #     path: |
       #       bin/*
       #   if: ${{ github.event_name == "tags" }}
+
+  build-linux-arm64:
+    name: Build Linux arm64
+
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        nim_version: [ devel ]
+
+    - name: Build arm64
+      id: build_arm64
+      uses: uraimo/run-on-arch-action@v1.1.0
+      with:
+        architecture: aarch64
+        # TODO - use alpine, its smaller?
+        distribution: ubuntu18.04
+        run: |
+          export NIM_VERSION=${{ matrix.nim_version }}
+          export CPU_ARCH=arm64
+          export OS_NAME=linux
+
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -q
+          apt-get install -q -y build-essential
+
+          curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/install_nim.sh?asd -LsSf -o install_nim.sh
+          cat install_nim.sh
+          source install_nim.sh
+
+          mkdir foo
+          echo "baz" >> foo/bar.txt
+          tar czf foo.tar.gz foo
+          echo ::set-output name=foo::$(cat foo.tar.gz)
+
+    - name: Cat binaries
+      run: |
+        echo ${{ steps.build_arm64.outputs.foo }} > foo.tar.gz
+        tar xzf foo.tar.gz
+        cat foo/bar.txt
+
+    # - name: Upload binaries for arm64
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     path: |
+    #       bin/*
+    #   if: ${{ github.event_name == "tags" }}
