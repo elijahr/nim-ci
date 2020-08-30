@@ -76,7 +76,7 @@ jobs:
             apt-get install -q -y build-essential git curl
 
             # Checkout repo
-            git clone -b $GITHUB_REF --single-branch "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" repo
+            git clone -b $GITHUB_REF --single-branch "https://github.com/${GITHUB_REPOSITORY}.git" repo
             cd repo
 
             # Install nim
