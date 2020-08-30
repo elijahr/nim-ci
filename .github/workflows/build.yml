@@ -45,7 +45,6 @@ jobs:
       - name: Run tests
         run: nimble test
 
-
       # - name: Upload binaries for ${{ matrix.arch }}
       #   uses: actions/upload-artifact@v2
       #   with:
@@ -68,7 +67,7 @@ jobs:
         uses: uraimo/run-on-arch-action@v1.1.0
         with:
           architecture: ${{ matrix.arch }}
-          # TODO - use alpine, its smaller?
+          # TODO - use alpine, its lighter?
           distribution: ubuntu18.04
           run: |
             set -ex
@@ -90,13 +89,13 @@ jobs:
             # Install dependencies
             nimble install -y -d
 
-            # Build binary
+            # Build bin/example
             nimble build
 
             # Run tests
             nimble test
 
-            # Export binary contents as variable
+            # Export bin/example contents as variable
             echo ::set-output name=binary::$(cat bin/example)
 
       - name: Reconstruct binaries

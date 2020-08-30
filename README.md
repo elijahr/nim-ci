@@ -1,3 +1,6 @@
+![Github Actions](https://github.com/elijahr/nim-ci/workflows/Build/badge.svg)
+![Travis](https://travis-ci.org/elijahr/nim-ci.svg?branch=devel&status=errored)
+
 Template Nim project with CI configurations to build binaries for Linux (amd64, arm64/aarch64), macOS (amd64), and Windows (amd64).
 
 TODO: add to github marketplace
