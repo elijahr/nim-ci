@@ -1,4 +1,4 @@
-name: Build ${{ matrix.os }}_${{ matrix.arch }}
+name: Build
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
 
 jobs:
   build:
+    name: Build ${{ matrix.os }}_${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
 
     strategy:
