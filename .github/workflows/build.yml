@@ -65,7 +65,7 @@ jobs:
 
   # Build for Linux aarch64 (arm64), ppc64le, etc
   build-linux-other-archs:
-    name: Build ubuntu-latest ${{ matrix.arch }}
+    name: Build linux ${{ matrix.arch }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -87,7 +87,7 @@ jobs:
             # Install system packages
             export DEBIAN_FRONTEND=noninteractive
             apt-get update -q
-            apt-get install -q -y build-essential git curl
+            apt-get install -q -y build-essential git curl bash
 
             # Checkout repo
             ref=`basename $GITHUB_REF`
