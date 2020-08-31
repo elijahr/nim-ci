@@ -252,7 +252,7 @@ make_artifact () {
   if [[ "$NIM_PROJECT_TYPE" == "executables" ]]
   then
     mkdir -p $DIST_DIR
-    for BIN in "${BINS[@]}"
+    for BIN in ${BINS[@]}
     do
       cp "${BIN_DIR}/${BIN}${BIN_EXT}" "${DIST_DIR}/"
     done
