@@ -51,11 +51,11 @@ script:
   # If this nim project exports executables, build them.
   - build_nim_project
 
+  # If this nim project exports executables, zip them.
+  # No-op for NIM_PROJECT_TYPE==library projects.
+  - make_artifact
+
   # Run unit tests
   - |
     cd "$NIM_PROJECT_DIR"
     nimble test
-
-  # If this nim project exports executables, zip them.
-  # No-op for NIM_PROJECT_TYPE==library projects.
-  - make_artifact

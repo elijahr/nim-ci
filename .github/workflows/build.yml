@@ -48,13 +48,13 @@ jobs:
           # If this nim project exports executables, build them.
           build_nim_project
 
-          # Run unit tests
-          cd "$NIM_PROJECT_DIR"
-          nimble test
-
           # If this nim project exports executables, zip them.
           # No-op for NIM_PROJECT_TYPE==library projects.
           make_artifact
+
+          # Run unit tests
+          cd "$NIM_PROJECT_DIR"
+          nimble test
 
       - name: Upload binary artifact for ${{ matrix.arch }}
         uses: actions/upload-artifact@v2
@@ -106,13 +106,13 @@ jobs:
             # If this nim project exports executables, build them.
             build_nim_project
 
-            # Run unit tests
-            cd "$NIM_PROJECT_DIR"
-            nimble test
-
             # If this nim project exports executables, zip them.
             # No-op for NIM_PROJECT_TYPE==library projects.
             make_artifact
+
+            # Run unit tests
+            cd "$NIM_PROJECT_DIR"
+            nimble test
 
       # make_artifact in the previous step stores the executable's
       # filename in zip_name, and the compressed executable's data in
