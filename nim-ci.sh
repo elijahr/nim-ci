@@ -111,7 +111,7 @@ download_nightly() {
     mkdir -p $HOME/Nim-devel
     tar -xf $NIGHTLY_ARCHIVE -C $HOME/Nim-devel --strip-components=1
     rm $NIGHTLY_ARCHIVE
-    add_path $HOME/Nim-devel/bin
+    add_path "${HOME}/Nim-devel/bin"
     echo "Installed nightly build $NIGHTLY_DOWNLOAD_URL"
     return $RET_DOWNLOADED
   fi
@@ -137,7 +137,7 @@ install_nim_nightly_or_build_nim () {
     local NIMREPO=$HOME/.choosenim/toolchains/nim-$NIM_VERSION-$CPU_ARCH
   fi
 
-  add_path $NIMREPO/bin
+  add_path "${NIMREPO}/bin"
 
   if [[ -f "$NIMREPO/bin/nim" ]]
   then
@@ -168,8 +168,8 @@ install_nim_with_choosenim () {
   # Install a Nim binary or build Nim from source, using choosenim
   local GITBIN=$HOME/.choosenim/git/bin
 
-  add_path $GITBIN
-  add_path $HOME/.nimble/bin
+  add_path "$GITBIN"
+  add_path "${HOME}/.nimble/bin"
 
   if ! type -P choosenim &> /dev/null
   then
