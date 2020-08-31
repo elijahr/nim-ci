@@ -198,7 +198,7 @@ install_nim_with_choosenim () {
   else
     echo "choosenim already installed"
     rm -rf $HOME/.choosenim/current
-    choosenim update $NIM_VERSION --latest
+    choosenim update $NIM_VERSION
     choosenim $NIM_VERSION
   fi
 }
@@ -306,7 +306,7 @@ init () {
 
   if [[ -z "$CHOOSENIM_CHOOSE_VERSION" ]]
   then
-    export CHOOSENIM_CHOOSE_VERSION="$NIM_VERSION --latest"
+    export CHOOSENIM_CHOOSE_VERSION="$NIM_VERSION"
   fi
 
   # Setup and normalize various environment variables.
