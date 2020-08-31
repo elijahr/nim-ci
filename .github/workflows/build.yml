@@ -44,7 +44,8 @@ jobs:
           echo ">>>>>"
           which bash
           echo "<<<<<"
-          source `curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf`
+          curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
+          source nim-ci.sh
           install_nim
 
           # If this nim project is a library, install it.
@@ -102,7 +103,8 @@ jobs:
               CPU_ARCH=${{ matrix.arch }} \
               OS_NAME=linux \
 
-            source `curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf`
+            curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
+            source nim-ci.sh
             install_nim
 
             # If this nim project is a library, install it.

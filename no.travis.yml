@@ -43,7 +43,8 @@ cache:
     - "$HOME/.choosenim" # cache nim binaries
 
 install:
-  - source `curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf`
+  - curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
+  - source nim-ci.sh
   - install_nim
 
 script:
