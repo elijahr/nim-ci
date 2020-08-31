@@ -374,22 +374,26 @@ init () {
 
   detect_nim_project_type
 
+  # Don't change these variables after they have been initialized
+  readonly BINS BIN_DIR BIN_EXT CPU_ARCH DIST_DIR NIM_PROJECT_DIR NIM_VERSION \
+    OS_NAME USE_CHOOSENIM ZIP_EXT ZIP_NAME ZIP_PATH
+
   echo "nim-ci config:"
   echo
-  echo "  OS_NAME=$OS_NAME"
-  echo "  CPU_ARCH=$CPU_ARCH"
-  echo "  NIM_VERSION=$NIM_VERSION"
-  echo "  NIM_PROJECT_DIR=$NIM_PROJECT_DIR"
-  echo "  NIM_PROJECT_NAME=$NIM_PROJECT_NAME"
-  echo "  NIM_PROJECT_TYPE=$NIM_PROJECT_TYPE"
   echo "  BINS=$(join_string_array ', ' $BINS)"
   echo "  BIN_DIR=$BIN_DIR"
   echo "  BIN_EXT=$BIN_EXT"
-  echo "  ZIP_EXT=$ZIP_EXT"
+  echo "  CPU_ARCH=$CPU_ARCH"
   echo "  DIST_DIR=$DIST_DIR"
-  echo "  ZIP_PATH=$ZIP_PATH"
-  echo "  ZIP_NAME=$ZIP_NAME"
+  echo "  NIM_PROJECT_DIR=$NIM_PROJECT_DIR"
+  echo "  NIM_PROJECT_NAME=$NIM_PROJECT_NAME"
+  echo "  NIM_PROJECT_TYPE=$NIM_PROJECT_TYPE"
+  echo "  NIM_VERSION=$NIM_VERSION"
+  echo "  OS_NAME=$OS_NAME"
   echo "  USE_CHOOSENIM=$USE_CHOOSENIM"
+  echo "  ZIP_EXT=$ZIP_EXT"
+  echo "  ZIP_NAME=$ZIP_NAME"
+  echo "  ZIP_PATH=$ZIP_PATH"
   echo
 }
 
