@@ -120,10 +120,10 @@ In addition to the above configurable variables, `nim-ci.sh` exports the followi
 
 `nim-ci.sh` exports some bash functions:
 
-* `add_path` - Add an entry to `PATH` in a cross-CI-platform way. For instance, GitHub Actions requires an additional step beyond simply setting `export PATH=foo:$PATH`.
+* `add_path` - Add an entry to `PATH` in a cross-CI-platform way. For instance, GitHub Actions requires an additional step beyond simply setting `export PATH=foo:$PATH`. Takes a single argument, the path to add. No return value.
 
-* `build_nim_project` - If `NIM_PROJECT_TYPE` is `executables`, this will run `nimble install -y`. If `NIM_PROJECT_TYPE` is `library`, this will run `nimble develop -y`.
+* `build_nim_project` - If `NIM_PROJECT_TYPE` is `executables`, this will run `nimble install -y`. If `NIM_PROJECT_TYPE` is `library`, this will run `nimble develop -y`. Takes no arguments, no return value.
 
-* `export_bin_artifacts` - If `NIM_PROJECT_TYPE` is `executables`, this will place the project's binaries in `DIST_DIR` and create the tarball/zipfile containing those binaries at `ZIP_PATH`. If `NIM_PROJECT_TYPE` is `library`, this is a no-op.
+* `export_bin_artifacts` - If `NIM_PROJECT_TYPE` is `executables`, this will place the project's binaries in `DIST_DIR` and create the tarball/zipfile containing those binaries at `ZIP_PATH`. If `NIM_PROJECT_TYPE` is `library`, this is a no-op. Takes no arguments, no return value.
 
-* `install_nim` - Install Nim and place it in `PATH`. This will use [choosenim](https://github.com/dom96/choosenim) when available for the architecture, otherwise will build Nim from source or use a nightly build, depending on the requested `NIM_VERSION`.
+* `install_nim` - Install Nim and place it in `PATH`. This will use [choosenim](https://github.com/dom96/choosenim) when available for the architecture, otherwise will build Nim from source or use a nightly build, depending on the requested `NIM_VERSION`. Takes no arguments, no return value.
