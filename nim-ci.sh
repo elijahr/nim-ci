@@ -10,6 +10,7 @@ export RET_DOWNLOADED=0
 export RET_NOT_DOWNLOADED=1
 
 declare -a BINS
+BINS=()
 
 add_path () {
   # Add an entry to PATH
@@ -208,7 +209,9 @@ detect_nim_project_type () {
   cd "$NIM_PROJECT_DIR"
 
   # Array of executables this project installs, as defined in the foo.nimble bin: @[] sequence
-  BINS=($(echo "$(nimble dump | grep bin: | sed -e 's/bin: //g' | sed -e 's/"*//g')" | tr "," "\n"))
+  while IFS= read -r line; do
+    BINS+=("$line")
+  done <<< $(echo "$(nimble dump | grep bin: | sed -e 's/bin: //g' | sed -e 's/"*//g')" | tr "," "\n")
   export BIN_DIR=$(nimble dump | grep binDir: | sed -e 's/binDir: //g' | sed -e 's/"*//g')
 
   if [[ ${#BINS[@]} -eq 0 ]]
@@ -252,17 +255,22 @@ make_artifact () {
   if [[ "$NIM_PROJECT_TYPE" == "executables" ]]
   then
     mkdir -p $DIST_DIR
-    for BIN in "${BINS[@]}"
+    for BIN in ${BINS[@]}
     do
       cp "${BIN_DIR}/${BIN}${BIN_EXT}" "${DIST_DIR}/"
     done
-    tar -c --lzma -f "${ZIP_PATH}" "$DIST_DIR"
+    cd "$DIST_DIR/.."
+    tar -c --lzma -f "${ZIP_PATH}" "$(basename "$DIST_DIR")"
+    cd -
+    echo "Made artifact $ZIP_PATH"
 
     if [[ ! -z "$GITHUB_WORKFLOW" ]]
     then
       echo ::set-output name=zip_name::$ZIP_NAME
       echo ::set-output name=zip_contents::$(cat "$ZIP_PATH")
     fi
+  else
+    echo "Project is a library, not making an artifact"
   fi
 }
 
@@ -376,8 +384,8 @@ init () {
   export NIM_PROJECT_VERSION=$(nimble dump | grep version: | sed -e 's/version: //g' | sed -e 's/"*//g')
   cd -
 
-  export DIST_DIR="${NIM_PROJECT_DIR}/dist/${NIM_PROJECT_NAME}-${OS_NAME}_${CPU_ARCH}"
-  export ZIP_NAME="${NIM_PROJECT_NAME}-${OS_NAME}_${CPU_ARCH}${ZIP_EXT}"
+  export DIST_DIR="${NIM_PROJECT_DIR}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${OS_NAME}_${CPU_ARCH}"
+  export ZIP_NAME="${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${OS_NAME}_${CPU_ARCH}${ZIP_EXT}"
   export ZIP_PATH="${NIM_PROJECT_DIR}/dist/${ZIP_NAME}"
 
   detect_nim_project_type
@@ -386,6 +394,7 @@ init () {
   readonly BINS BIN_DIR BIN_EXT CPU_ARCH DIST_DIR NIM_PROJECT_DIR NIM_VERSION \
     OS_NAME USE_CHOOSENIM ZIP_EXT ZIP_NAME ZIP_PATH
 
+  echo
   echo "nim-ci config:"
   echo
   echo "  BINS=$(join_string_array ', ' $BINS)"
