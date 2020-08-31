@@ -170,7 +170,6 @@ install_nim_with_choosenim () {
   local GITBIN=$HOME/.choosenim/git/bin
 
   add_path "$GITBIN"
-  add_path "${HOME}/.nimble/bin"
 
   if ! type -P choosenim &> /dev/null
   then
@@ -277,6 +276,7 @@ install_nim () {
     # fallback for platforms that don't have choosenim binaries
     install_nim_nightly_or_build_nim
   fi
+  add_path "${HOME}/.nimble/bin"
 }
 
 

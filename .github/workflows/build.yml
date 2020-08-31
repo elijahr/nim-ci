@@ -55,8 +55,9 @@ jobs:
           # Run unit tests
           cd "$NIM_PROJECT_DIR"
           nimble test
+          cd -
 
-      - name: Upload binary artifact for ${{ matrix.arch }}
+      - name: Upload binary artifact for amd64
         uses: actions/upload-artifact@v2
         with:
           path: |
@@ -92,7 +93,9 @@ jobs:
 
             # Checkout repo
             ref=`basename $GITHUB_REF`
-            git clone -b $ref --single-branch "https://github.com/${GITHUB_REPOSITORY}.git"
+            git clone -b $ref --single-branch "https://github.com/${GITHUB_REPOSITORY}.git" repo
+
+            cd repo
 
             # Setup vars for nim-ci.sh
             export \
@@ -119,6 +122,6 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           path: |
-            dist/*.tar.xz
-            dist/*.zip
+            repo/dist/*.tar.xz
+            repo/dist/*.zip
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
