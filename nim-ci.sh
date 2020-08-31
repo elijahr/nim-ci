@@ -148,7 +148,13 @@ install_nim_nightly_or_build_nim () {
     then
       local GITREF="v$NIM_VERSION" # version tag
     else
-      local GITREF=$NIM_VERSION
+      if [[ "$NIM_VERSION" == "stable" ]]
+      then
+        # Get the last tagged release
+        local GITREF=$(git ls-remote https://github.com/nim-lang/Nim.git | grep refs/tags/v | tail -n 2 | head -n 1 | sed 's/^.*tags\///')
+      else
+        local GITREF=$NIM_VERSION
+      fi
     fi
     git clone -b $GITREF --depth 1 --single-branch https://github.com/nim-lang/Nim.git $NIMREPO
     cd $NIMREPO
