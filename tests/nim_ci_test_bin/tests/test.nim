@@ -8,7 +8,7 @@ const zipExt =
   when defined(windows): ".zip"
   else: ".tar.xz"
 
-proc distDir(): string = (".."/"dist"/"nim_ci_test-" & hostOS & "_" & hostCPU).absolutePath
+proc distDir(): string = (".."/"dist"/"nim_ci_test-0.1.0-" & hostOS & "_" & hostCPU).absolutePath
 proc binDir(): string = (".."/"bin").absolutePath
 
 
