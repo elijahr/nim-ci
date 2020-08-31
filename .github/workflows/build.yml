@@ -115,22 +115,6 @@ jobs:
             cd "$NIM_PROJECT_DIR"
             nimble test
 
-      # make_artifact in the previous step stores the executable's
-      # filename in zip_name, and the compressed executable's data in
-      # zip_contents.
-      # Use those values to reconstruct the executable in the parent container.
-      # This is a no-op for library projects.
-      - name: Construct artifact
-        env:
-          ZIP_NAME: ${{ steps.build_arch.outputs.zip_name }}
-          ZIP_CONTENTS: ${{ steps.build_arch.outputs.zip_contents }}
-        run: |
-          if [[ ! -z "$ZIP_NAME" ]]
-          then
-            mkdir -p artifact
-            echo "$ZIP_CONTENTS" > artifact/"$ZIP_NAME"
-          fi
-
       - name: Upload binary artifact for ${{ matrix.arch }}
         uses: actions/upload-artifact@v2
         with:

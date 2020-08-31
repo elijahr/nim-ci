@@ -263,12 +263,6 @@ make_artifact () {
     tar -c --lzma -f "${ZIP_PATH}" "$(basename "$DIST_DIR")"
     cd -
     echo "Made artifact $ZIP_PATH"
-
-    if [[ ! -z "$GITHUB_WORKFLOW" ]]
-    then
-      echo ::set-output name=zip_name::$ZIP_NAME
-      echo ::set-output name=zip_contents::$(cat "$ZIP_PATH")
-    fi
   else
     echo "Project is a library, not making an artifact"
   fi
