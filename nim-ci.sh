@@ -345,7 +345,7 @@ init () {
   esac
 
   # Autodetect whether to use choosenim or build Nim from source, based on architecture
-  if [[ ( "$CPU_ARCH" == "amd64" || "$USE_CHOOSENIM" == "yes" ]]
+  if [[ "$CPU_ARCH" == "amd64" || "$USE_CHOOSENIM" == "yes" ]]
   then
     export USE_CHOOSENIM=yes
   else
