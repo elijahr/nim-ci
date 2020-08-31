@@ -17,7 +17,7 @@ jobs:
       matrix:
         # os: [ubuntu-latest, windows-latest, macos-latest]
         os: [ ubuntu-latest ]
-        nim_version: [ stable ]
+        nim_version: [ devel ]
 
     steps:
       - name: Checkout repo
