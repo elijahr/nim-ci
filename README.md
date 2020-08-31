@@ -29,7 +29,7 @@ This script is used by various tools like [nimble](https://github.com/nim-lang/n
 
 ```sh
 cd path/to/my/repo
-curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/devel/install_github.sh | sh
+curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/v0.1.0/install_github.sh | sh
 git add .github
 git commit -m "Add GitHub Actions"
 git push
@@ -39,7 +39,7 @@ git push
 
 ```sh
 cd path/to/my/repo
-curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/devel/install_travis.sh | sh
+curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/v0.1.0/install_travis.sh | sh
 git add .travis.yml
 git commit -m "Add Travis CI"
 git push
@@ -47,12 +47,12 @@ git push
 
 ### Other CIs
 
-The [.travis.yml](https://github.com/elijahr/nim-ci/blob/devel/.travis.yml) config is an easy to read example. Essentially:
+The [.travis.yml](https://github.com/elijahr/nim-ci/blob/v0.1.0/.travis.yml) config is an easy to read example. Essentially:
 
 1. Install Nim
 
   ```sh
-  curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
+  curl https://raw.githubusercontent.com/elijahr/nim-ci/v0.1.0/nim-ci.sh -LsSf > nim-ci.sh
   source nim-ci.sh
   install_nim
   ```
