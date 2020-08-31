@@ -112,7 +112,7 @@ In addition to the above configurable variables, `nim-ci.sh` exports the followi
 
 * `ZIP_NAME` - The interpolated value of `${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${OS_NAME}_${CPU_ARCH}${ZIP_EXT}`.
 
-* `ZIP_PATH` - The interpolated value of `${NIM_PROJECT_PATH}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${OS_NAME}_${CPU_ARCH}${ZIP_EXT}`.
+* `ZIP_PATH` - The interpolated value of `${NIM_PROJECT_PATH}/dist/${ZIP_NAME}`.
 
 ### Bash functions
 
