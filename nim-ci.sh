@@ -156,7 +156,7 @@ install_nim_nightly_or_build_nim () {
         local GITREF=$NIM_VERSION
       fi
     fi
-    git clone -b $GITREF --depth 1 --single-branch https://github.com/nim-lang/Nim.git $NIMREPO
+    git clone -b $GITREF --single-branch https://github.com/nim-lang/Nim.git $NIMREPO
     cd $NIMREPO
     sh build_all.sh
     # back to prev directory
