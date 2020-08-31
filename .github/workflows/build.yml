@@ -17,7 +17,7 @@ jobs:
       matrix:
         # os: [ubuntu-latest, windows-latest, macos-latest]
         os: [ ubuntu-latest ]
-        nim_version: [ devel ]
+        nim_version: [ stable ]
 
     steps:
       - name: Checkout repo
@@ -49,16 +49,16 @@ jobs:
           install_nim
 
           # If this nim project is a library, install it.
-          # If this nim project exports an executable binary, build it.
+          # If this nim project exports executables, build them.
           build_nim_project
 
           # Run unit tests
           cd "$NIM_PROJECT_DIR"
           nimble test
 
-          # If this nim project exports an executable binary, export it.
+          # If this nim project exports executables, zip them.
           # No-op for library projects.
-          export_bin_artifacts
+          make_artifact
 
       # - name: Upload binaries for ${{ matrix.arch }}
       #   uses: actions/upload-artifact@v2
@@ -74,7 +74,7 @@ jobs:
 
     strategy:
       matrix:
-        nim_version: [ devel ]
+        nim_version: [ stable ]
         arch: [aarch64] #, ppc64le]
 
     steps:
@@ -108,22 +108,22 @@ jobs:
             install_nim
 
             # If this nim project is a library, install it.
-            # If this nim project exports an executable binary, build it.
+            # If this nim project exports executables, build them.
             build_nim_project
 
             # Run unit tests
             cd "$NIM_PROJECT_DIR"
             nimble test
 
-            # If this nim project exports an executable binary, export it.
+            # If this nim project exports executables, zip them.
             # No-op for library projects.
-            export_bin_artifacts
+            make_artifact
 
-      # export_bin_artifacts in the previous step stores the executable's
+      # make_artifact in the previous step stores the executable's
       # filename in exe_name, and the compressed executable's data in exe_gz.
       # Use those values to reconstruct the executable in the parent container.
       # This is a no-op for library projects.
-      - name: Construct executable
+      - name: Construct artifact
         env:
           EXE_NAME: ${{ steps.build_arch.outputs.exe_name }}
           EXE_GZ: ${{ steps.build_arch.outputs.exe_gz }}

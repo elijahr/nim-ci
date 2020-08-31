@@ -224,7 +224,7 @@ detect_nim_project_type () {
 
 build_nim_project () {
   # If the project is a library, install it.
-  # If the project exports executables, build it.
+  # If the project exports executables, build them.
   cd "$NIM_PROJECT_DIR"
 
   if [[ "$NIM_PROJECT_TYPE" == "executables" ]]
@@ -240,7 +240,7 @@ build_nim_project () {
   cd -
 }
 
-export_bin_artifacts () {
+make_artifact () {
   # Export binary executables if the Nim project is configured to do so.
   # If the Nim project is a library, this is a no-op.
   if [[ "$NIM_PROJECT_TYPE" == "executables" ]]

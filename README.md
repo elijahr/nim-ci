@@ -17,7 +17,7 @@
   * macOs (`amd64`)
   * Windows (`amd64`)
 
-The `nim-ci.sh` script should work with any CI that lets you run bash scripts.
+The `nim-ci.sh` script should work with any CI that can run bash scripts.
 Pull requests with configuration files for other CIs are welcome.
 
 This script is used by various tools like [nimble](https://github.com/nim-lang/nimble),
@@ -69,7 +69,7 @@ The [.travis.yml](https://github.com/elijahr/nim-ci/blob/v0.1.0/.travis.yml) con
 3. If your project produces executables, generate artifacts:
 
   ```sh
-  export_bin_artifacts
+  make_artifact
   # Do something with the artifact now at $ZIP_PATH
   ```
 
@@ -125,6 +125,6 @@ In addition to the above configurable variables, `nim-ci.sh` exports the followi
 
 * `build_nim_project` - If `NIM_PROJECT_TYPE` is `executables`, this will run `nimble install -y`. If `NIM_PROJECT_TYPE` is `library`, this will run `nimble develop -y`. Takes no arguments, no return value.
 
-* `export_bin_artifacts` - If `NIM_PROJECT_TYPE` is `executables`, this will place the project's binaries in `DIST_DIR` and create the tarball/zipfile containing those binaries at `ZIP_PATH`. If `NIM_PROJECT_TYPE` is `library`, this is a no-op. Takes no arguments, no return value.
+* `make_artifact` - If `NIM_PROJECT_TYPE` is `executables`, this will place the project's binaries in `DIST_DIR` and create the tarball/zipfile containing those binaries at `ZIP_PATH`. If `NIM_PROJECT_TYPE` is `library`, this is a no-op. Takes no arguments, no return value.
 
 * `install_nim` - Install Nim and place it in `PATH`. This will use [choosenim](https://github.com/dom96/choosenim) when available for the architecture, otherwise will build Nim from source or use a nightly build, depending on the requested `NIM_VERSION`. Takes no arguments, no return value.
