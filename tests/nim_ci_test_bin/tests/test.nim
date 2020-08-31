@@ -8,7 +8,8 @@ const zipExt =
   when defined(windows): ".zip"
   else: ".tar.xz"
 
-proc distDir(): string = (".."/"dist"/"nim_ci_test-0.1.0-" & hostOS & "_" & hostCPU).absolutePath
+proc distName(): string = "nim_ci_test_bin-0.1.0-" & hostOS & "_" & hostCPU
+proc distDir(): string = (".."/"dist"/distName()).absolutePath
 proc binDir(): string = (".."/"bin").absolutePath
 
 
@@ -40,14 +41,17 @@ suite "test":
       check output.strip == bin
 
   test "zip is sane":
-    removeDir("foo")
     let zipFile = distDir() & zipExt
-    let (output, exitCode) = execCmdEx("tar xf " & zipFile & " -C foo")
+    let outDir = getTempDir()/"nim_ci_test_bin"
+    removeDir(outDir)
+    createDir(outDir)
+    let (output, exitCode) = execCmdEx("tar xf " & zipFile & " -C " & outDir)
+    defer:
+      removeDir(outDir)
     check exitCode == 0
     check output.strip == ""
-    check dirExists("foo")
+    check dirExists(outDir/distName())
     for bin in ["nim_ci_test_bin_1", "nim_ci_test_bin_2"]:
-      let (output, exitCode) = execCmdEx("foo"/bin)
+      let (output, exitCode) = execCmdEx(outDir/distName()/bin)
       check exitCode == 0
       check output.strip == bin
-    removeDir("foo")
