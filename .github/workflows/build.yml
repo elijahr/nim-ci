@@ -60,7 +60,8 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           path: |
-            artifact/*
+            dist/*.tar.xz
+            dist/*.zip
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
 
   # Build for Linux aarch64 (arm64), ppc64le, etc
@@ -134,5 +135,6 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           path: |
-            artifact/*
+            dist/*.tar.xz
+            dist/*.zip
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
