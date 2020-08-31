@@ -76,7 +76,7 @@ The [.travis.yml](https://github.com/elijahr/nim-ci/blob/v0.1.0/.travis.yml) con
 
 For most projects `nim-ci.sh` shouldn't need any configuration; just install it, enable GitHub Actions/Travis for your repo, and start pushing. Some configuration is possible through environment variables. See below.
 
-### Environment variables
+### Configurable environment variables
 
 These environment variables can be customized in your GitHub/Travis config. If using another CI, set  these values prior to running `source nim-ci.sh`:
 
@@ -91,6 +91,8 @@ These environment variables can be customized in your GitHub/Travis config. If u
 * `USE_CHOOSENIM` - If set to `yes`, Nim will be installed using [choosenim](https://github.com/dom96/choosenim). If set to `no`, Nim will be installed either via a nightly binary (when `NIM_VERSION` is `devel`) or built and installed from source (when `NIM_VERSION` is not `devel`). Default: `yes` when `CPU_ARCH` is `amd64`, `no` otherwise.
 
 After running `source nim-ci.sh`, the above variables will be set, containing either your values (normalized) or the defaults. If you need to configure beyond setting these variables, you can of course edit the `build.yml` or `.travis.yml` files in your repo to suit your needs. Please do submit pull requests for improvements!
+
+### Generated environment variables
 
 In addition to the above configurable variables, `nim-ci.sh` exports the following read-only environment variables.
 
