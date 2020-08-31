@@ -35,7 +35,7 @@ jobs:
           key: ${{ runner.os }}
 
       - name: Install & build
-        shell: sh
+        shell: bash
         env:
           NIM_VERSION: ${{ matrix.nim_version }}
           CPU_ARCH: amd64
