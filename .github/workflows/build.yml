@@ -35,12 +35,15 @@ jobs:
           key: ${{ runner.os }}
 
       - name: Install & build
-        shell: bash
         env:
           NIM_VERSION: ${{ matrix.nim_version }}
           CPU_ARCH: amd64
           OS_NAME: ${{ matrix.os }}
+        shell: bash
         run: |
+          echo ">>>>>"
+          which bash
+          echo "<<<<<"
           source `curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf`
           install_nim
 
