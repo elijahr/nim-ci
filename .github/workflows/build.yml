@@ -82,20 +82,12 @@ jobs:
         uses: uraimo/run-on-arch-action@v1.1.0
         with:
           architecture: ${{ matrix.arch }}
-          distribution: alpine_latest
+          distribution: buster
           run: |
             # Install system packages
-            case "${{ matrix.os }}" in
-              alpine*)
-                apk add --update g++ make git curl
-                ;;
-              stretch|buster|ubuntu*)
-                # debian or debian-based
-                export DEBIAN_FRONTEND=noninteractive
-                apt-get update -q
-                apt-get install -q -y build-essential git curl
-                ;;
-            esac
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -q
+            apt-get install -q -y build-essential git curl
 
             # Checkout repo
             ref=`basename $GITHUB_REF`
