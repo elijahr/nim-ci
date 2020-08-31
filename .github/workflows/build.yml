@@ -137,9 +137,9 @@ jobs:
             chmod +x bin/$EXE_NAME
           fi
 
-      - name: Upload binaries for ${{ matrix.arch }}
-        uses: actions/upload-artifact@v2
-        with:
-          path: |
-            bin/*
-        if: ${{ github.event_name == "tags" }}
+      # - name: Upload binaries for ${{ matrix.arch }}
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     path: |
+      #       bin/*
+      #   if: ${{ github.event_name == "tags" }}
