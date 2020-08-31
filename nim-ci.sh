@@ -9,7 +9,7 @@ export CHOOSENIM_NO_ANALYTICS=1
 export RET_DOWNLOADED=0
 export RET_NOT_DOWNLOADED=1
 
-declare BINS
+declare -a BINS
 
 add_path () {
   # Add an entry to PATH
@@ -208,7 +208,7 @@ detect_nim_project_type () {
   cd "$NIM_PROJECT_DIR"
 
   # Array of executables this project installs, as defined in the foo.nimble bin: @[] sequence
-  BINS=$(echo "$(nimble dump | grep bin: | sed -e 's/bin: //g' | sed -e 's/"*//g')" | tr "," "\n")
+  BINS=($(echo "$(nimble dump | grep bin: | sed -e 's/bin: //g' | sed -e 's/"*//g')" | tr "," "\n"))
   export BIN_DIR=$(nimble dump | grep binDir: | sed -e 's/binDir: //g' | sed -e 's/"*//g')
 
   if [[ ${#BINS[@]} -eq 0 ]]
@@ -252,7 +252,7 @@ make_artifact () {
   if [[ "$NIM_PROJECT_TYPE" == "executables" ]]
   then
     mkdir -p $DIST_DIR
-    for BIN in ${BINS[@]}
+    for BIN in "${BINS[@]}"
     do
       cp "${BIN_DIR}/${BIN}${BIN_EXT}" "${DIST_DIR}/"
     done
