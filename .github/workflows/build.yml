@@ -49,11 +49,11 @@ jobs:
           install_or_build_nim_project
 
           # Run unit tests
-          cd_to_nim_project
+          cd "$NIM_PROJECT_DIR"
           nimble test
 
           # If this nim project exports an executable binary, export it. No-op for library projects.
-          export_exe_artifact
+          export_bin_artifacts
 
       # - name: Upload binaries for ${{ matrix.arch }}
       #   uses: actions/upload-artifact@v2
@@ -114,14 +114,14 @@ jobs:
             install_or_build_nim_project
 
             # Run unit tests
-            cd_to_nim_project
+            cd "$NIM_PROJECT_DIR"
             nimble test
 
             # If this nim project exports an executable binary, export it.
             # No-op for library projects.
-            export_exe_artifact
+            export_bin_artifacts
 
-      # export_exe_artifact in the previous step stores the executable's
+      # export_bin_artifacts in the previous step stores the executable's
       # filename in exe_name, and the compressed executable's data in exe_gz.
       # Use those values to reconstruct the executable in the parent container.
       # This is a no-op for library projects.

@@ -53,5 +53,5 @@ script:
   - install_or_build_nim_project
 
   # Run unit tests
-  - cd_to_nim_project
+  - cd "$NIM_PROJECT_DIR"
   - nimble test
