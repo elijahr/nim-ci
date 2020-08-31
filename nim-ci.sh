@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 # TODO - keep this or nah?
 export CHOOSENIM_NO_ANALYTICS=1
@@ -8,6 +8,8 @@ export CHOOSENIM_NO_ANALYTICS=1
 # return codes
 export RET_DOWNLOADED=0
 export RET_NOT_DOWNLOADED=1
+
+declare BINS
 
 add_path () {
   # Add an entry to PATH
@@ -25,7 +27,7 @@ normalize_cpu_arch() {
   # * arm
   # * ppc64le
 
-  local cpu_arch=`echo $1 | tr "[:upper:]" "[:lower:]"`
+  local cpu_arch=$(echo $1 | tr "[:upper:]" "[:lower:]")
 
   case $cpu_arch in
     *amd*64* | *x86*64* ) local cpu_arch="amd64" ;;
@@ -45,7 +47,7 @@ normalize_os_name () {
   # * macosx
   # * windows
 
-  local os_name=`echo $1 | tr "[:upper:]" "[:lower:]"`
+  local os_name=$(echo $1 | tr "[:upper:]" "[:lower:]")
 
   case $os_name in
     *linux* | *ubuntu* | *alpine* ) local os_name="linux" ;;
@@ -200,8 +202,8 @@ detect_nim_project_type () {
   cd "$NIM_PROJECT_DIR"
 
   # Array of executables this project installs, as defined in the foo.nimble bin: @[] sequence
-  export BINS=($(echo `nimble dump | grep bin: | sed -e 's/bin: //g' | sed -e 's/"*//g'` | tr "," "\n"))
-  export BIN_DIR=`nimble dump | grep binDir: | sed -e 's/binDir: //g' | sed -e 's/"*//g'`
+  BINS=$(echo "$(nimble dump | grep bin: | sed -e 's/bin: //g' | sed -e 's/"*//g')" | tr "," "\n")
+  export BIN_DIR=$(nimble dump | grep binDir: | sed -e 's/binDir: //g' | sed -e 's/"*//g')
 
   if [[ ${#BINS[@]} -eq 0 ]]
   then
@@ -311,7 +313,7 @@ init () {
   if [[ -z "$OS_NAME" ]]
   then
     # Infer OS_NAME if not explicitly provided
-    export OS_NAME=`uname`
+    export OS_NAME=$(uname)
   fi
 
   export OS_NAME=$(normalize_os_name $OS_NAME)
@@ -325,13 +327,13 @@ init () {
   if [[ -z "$CPU_ARCH" ]]
   then
     # Infer CPU_ARCH if not explicitly provided
-    export CPU_ARCH=`uname -m`
+    export CPU_ARCH=$(uname -m)
   fi
 
   export CPU_ARCH=$(normalize_cpu_arch $CPU_ARCH)
 
   export BIN_EXT=""
-  export ZIP_EXT=".xz"
+  export ZIP_EXT=".tar.xz"
 
   case $OS_NAME in
     macosx)
@@ -355,15 +357,15 @@ init () {
   # Autodetect the location of the nim project if not explicitly provided.
   if [[ -z "$NIM_PROJECT_DIR" ]]
   then
-    export NIM_PROJECT_DIR=$(cd $(dirname $(find . -type f -name "*.nimble" -print -quit)); pwd)
-  else
-    # Make NIM_PROJECT_DIR absolute
-    export NIM_PROJECT_DIR=$(cd $NIM_PROJECT_DIR; pwd)
+    export NIM_PROJECT_DIR=$(dirname $(find . -type f -name "*.nimble" -print -quit))
   fi
 
-  export NIM_PROJECT_NAME=$(ls ${NIM_PROJECT_DIR}/*.nimble | sed -n 's/\(.*\)\.nimble/\1/p')
+  # Make NIM_PROJECT_DIR absolute
+  export NIM_PROJECT_DIR=$(cd $NIM_PROJECT_DIR; pwd)
+
+  export NIM_PROJECT_NAME=$(basename $(ls ${NIM_PROJECT_DIR}/*.nimble | sed -n 's/\(.*\)\.nimble/\1/p'))
   cd "$NIM_PROJECT_DIR"
-  export NIM_PROJECT_VERSION=`nimble dump | grep version: | sed -e 's/version: //g' | sed -e 's/"*//g'`
+  export NIM_PROJECT_VERSION=$(nimble dump | grep version: | sed -e 's/version: //g' | sed -e 's/"*//g')
   cd -
 
   export DIST_DIR="${NIM_PROJECT_DIR}/dist/${NIM_PROJECT_NAME}-${OS_NAME}_${CPU_ARCH}"
@@ -375,7 +377,7 @@ init () {
   echo "nim-ci config:"
   echo
   echo "  OS_NAME=$OS_NAME"
-  echo "  CPU_ARCH=$CPU_ARC"
+  echo "  CPU_ARCH=$CPU_ARCH"
   echo "  NIM_VERSION=$NIM_VERSION"
   echo "  NIM_PROJECT_DIR=$NIM_PROJECT_DIR"
   echo "  NIM_PROJECT_NAME=$NIM_PROJECT_NAME"
@@ -385,7 +387,7 @@ init () {
   echo "  BIN_EXT=$BIN_EXT"
   echo "  ZIP_EXT=$ZIP_EXT"
   echo "  DIST_DIR=$DIST_DIR"
-  echo "  ZIP_PATH=$ZIP_NAME"
+  echo "  ZIP_PATH=$ZIP_PATH"
   echo "  ZIP_NAME=$ZIP_NAME"
   echo "  USE_CHOOSENIM=$USE_CHOOSENIM"
   echo
