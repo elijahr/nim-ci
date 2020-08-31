@@ -5,53 +5,57 @@ language: c
 matrix:
   include:
     # Linux - amd64
-    - env: BRANCH=0.20.2
-    - env: BRANCH=1.0.8
-    - env: BRANCH=1.2.6
-    - env: BRANCH=devel
+    - env: NIM_VERSION=0.20.2
+    - env: NIM_VERSION=1.0.8
+    - env: NIM_VERSION=1.2.6
+    - env: NIM_VERSION=devel
 
     ## Uncomment to test on Linux - arm64
     # - arch: arm64
-    #   env: BRANCH=1.2.6
+    #   env: NIM_VERSION=1.2.6
 
     ## Uncomment to test on Linux - ppc64
     # - arch: ppc64le
-    #   env: BRANCH=1.2.6
+    #   env: NIM_VERSION=1.2.6
 
     # macOS - amd64
     - os: osx
-      env: BRANCH=0.20.2
+      env: NIM_VERSION=0.20.2
     - os: osx
-      env: BRANCH=1.0.8
+      env: NIM_VERSION=1.0.8
     - os: osx
-      env: BRANCH=1.2.6
+      env: NIM_VERSION=1.2.6
     - os: osx
-      env: BRANCH=devel
+      env: NIM_VERSION=devel
 
     # windows - amd64
     - os: windows
-      env: BRANCH=0.20.2
+      env: NIM_VERSION=0.20.2
     - os: windows
-      env: BRANCH=1.0.8
+      env: NIM_VERSION=1.0.8
     - os: windows
-      env: BRANCH=1.2.6
+      env: NIM_VERSION=1.2.6
     - os: windows
-      env: BRANCH=devel
+      env: NIM_VERSION=devel
 
 cache:
   directories:
     - "$HOME/.choosenim" # cache nim binaries
 
 install:
-  # Set up environment with CI convenience functions and install nim
-  - source `curl https://raw.githubusercontent.com/elijahr/nim-ci/master/nim-ci.sh -LsSf`
+  - source `curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf`
   - install_nim
 
 script:
-  # nimble build or nimble install your project.
-  # autodetects which depending on if your project's nimble config exports a bin or not.
-  - install_or_build_nim_project
+  # If this nim project is a library, install it.
+  # If this nim project exports an executable binary, build it.
+  - build_nim_project
 
   # Run unit tests
-  - cd "$NIM_PROJECT_DIR"
-  - nimble test
+  - |
+    cd "$NIM_PROJECT_DIR"
+    nimble test
+
+  # If this nim project exports an executable binary, export it.
+  # No-op for library projects.
+  - export_bin_artifacts
