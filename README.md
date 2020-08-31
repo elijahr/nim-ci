@@ -17,6 +17,7 @@
   * macOs (`amd64`)
   * Windows (`amd64`)
 
+The `nim-ci.sh` script should work with any CI that lets you run bash scripts.
 Pull requests with configuration files for other CIs are welcome.
 
 This script is used by various tools like [nimble](https://github.com/nim-lang/nimble),
