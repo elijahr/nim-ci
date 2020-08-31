@@ -94,34 +94,34 @@ After running `source nim-ci.sh`, the above variables will be set, containing ei
 
 In addition to the above configurable variables, `nim-ci.sh` exports the following read-only environment variables.
 
-* `NIM_PROJECT_NAME` - The name of the Nim project.
-
-* `NIM_PROJECT_VERSION` - The version of the Nim project.
-
-* `NIM_PROJECT_TYPE` - `library` or `executables`, depending on whether the nimble file contains `bins`.
-
 * `BINS` - a bash array containing the `bin` entries from the nimble file.
 
 * `BIN_DIR` - `binDir` value from the nimble file.
 
 * `BIN_EXT` - `.exe` on Windows, empty otherwise.
 
-* `ZIP_EXT` - `.zip` on Windows, `.tar.xz` otherwise.
-
 * `DIST_DIR` - The interpolated value of `${NIM_PROJECT_PATH}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${OS_NAME}_${CPU_ARCH}`.
 
-* `ZIP_PATH` - The interpolated value of `${NIM_PROJECT_PATH}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${OS_NAME}_${CPU_ARCH}${ZIP_EXT}`.
+* `NIM_PROJECT_NAME` - The name of the Nim project.
+
+* `NIM_PROJECT_TYPE` - `library` or `executables`, depending on whether the nimble file contains `bins`.
+
+* `NIM_PROJECT_VERSION` - The version of the Nim project.
+
+* `ZIP_EXT` - `.zip` on Windows, `.tar.xz` otherwise.
 
 * `ZIP_NAME` - The interpolated value of `${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${OS_NAME}_${CPU_ARCH}${ZIP_EXT}`.
+
+* `ZIP_PATH` - The interpolated value of `${NIM_PROJECT_PATH}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${OS_NAME}_${CPU_ARCH}${ZIP_EXT}`.
 
 ### Bash functions
 
 `nim-ci.sh` exports some bash functions:
 
-* `install_nim` - Install Nim and place it in `PATH`. This will use [choosenim](https://github.com/dom96/choosenim) when available for the architecture, otherwise will build Nim from source or use a nightly build, depending on the requested `NIM_VERSION`.
+* `add_path` - Add an entry to `PATH` in a cross-CI-platform way. For instance, GitHub Actions requires an additional step beyond simply setting `export PATH=foo:$PATH`.
 
 * `build_nim_project` - If `NIM_PROJECT_TYPE` is `executables`, this will run `nimble install -y`. If `NIM_PROJECT_TYPE` is `library`, this will run `nimble develop -y`.
 
 * `export_bin_artifacts` - If `NIM_PROJECT_TYPE` is `executables`, this will place the project's binaries in `DIST_DIR` and create the tarball/zipfile containing those binaries at `ZIP_PATH`. If `NIM_PROJECT_TYPE` is `library`, this is a no-op.
 
-* `add_path` - Add an entry to `PATH` in a cross-CI-platform way. For instance, GitHub Actions requires an additional step beyond simply setting `export PATH=foo:$PATH`.
+* `install_nim` - Install Nim and place it in `PATH`. This will use [choosenim](https://github.com/dom96/choosenim) when available for the architecture, otherwise will build Nim from source or use a nightly build, depending on the requested `NIM_VERSION`.
