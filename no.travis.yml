@@ -45,7 +45,6 @@ cache:
 install:
   - curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
   - source nim-ci.sh
-  - install_nim
 
 script:
   # If this nim project is a library, install it.
@@ -58,5 +57,5 @@ script:
     nimble test
 
   # If this nim project exports executables, zip them.
-  # No-op for library projects.
+  # No-op for NIM_PROJECT_TYPE==library projects.
   - make_artifact

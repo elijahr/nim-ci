@@ -41,12 +41,8 @@ jobs:
           OS_NAME: ${{ matrix.os }}
         shell: bash
         run: |
-          echo ">>>>>"
-          which bash
-          echo "<<<<<"
           curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
           source nim-ci.sh
-          install_nim
 
           # If this nim project is a library, install it.
           # If this nim project exports executables, build them.
@@ -57,15 +53,15 @@ jobs:
           nimble test
 
           # If this nim project exports executables, zip them.
-          # No-op for library projects.
+          # No-op for NIM_PROJECT_TYPE==library projects.
           make_artifact
 
-      # - name: Upload binaries for ${{ matrix.arch }}
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     path: |
-      #       bin/*
-      #   if: ${{ github.event_name == "tags" }}
+      - name: Upload binary artifact for ${{ matrix.arch }}
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            artifact/*
+        if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
 
   # Build for Linux aarch64 (arm64), ppc64le, etc
   build-linux-other-archs:
@@ -105,7 +101,6 @@ jobs:
 
             curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
             source nim-ci.sh
-            install_nim
 
             # If this nim project is a library, install it.
             # If this nim project exports executables, build them.
@@ -116,28 +111,28 @@ jobs:
             nimble test
 
             # If this nim project exports executables, zip them.
-            # No-op for library projects.
+            # No-op for NIM_PROJECT_TYPE==library projects.
             make_artifact
 
       # make_artifact in the previous step stores the executable's
-      # filename in exe_name, and the compressed executable's data in exe_gz.
+      # filename in zip_name, and the compressed executable's data in
+      # zip_contents.
       # Use those values to reconstruct the executable in the parent container.
       # This is a no-op for library projects.
       - name: Construct artifact
         env:
-          EXE_NAME: ${{ steps.build_arch.outputs.exe_name }}
-          EXE_GZ: ${{ steps.build_arch.outputs.exe_gz }}
+          ZIP_NAME: ${{ steps.build_arch.outputs.zip_name }}
+          ZIP_CONTENTS: ${{ steps.build_arch.outputs.zip_contents }}
         run: |
-          if [[ ! -z "$EXE_NAME" ]]
+          if [[ ! -z "$ZIP_NAME" ]]
           then
-            mkdir -p bin
-            echo "$EXE_GZ" > bin/$EXE_NAME
-            chmod +x bin/$EXE_NAME
+            mkdir -p artifact
+            echo "$ZIP_CONTENTS" > artifact/"$ZIP_NAME"
           fi
 
-      # - name: Upload binaries for ${{ matrix.arch }}
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     path: |
-      #       bin/*
-      #   if: ${{ github.event_name == "tags" }}
+      - name: Upload binary artifact for ${{ matrix.arch }}
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            artifact/*
+        if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}

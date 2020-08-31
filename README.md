@@ -55,7 +55,6 @@ The [.travis.yml](https://github.com/elijahr/nim-ci/blob/v0.1.0/.travis.yml) con
   ```sh
   curl https://raw.githubusercontent.com/elijahr/nim-ci/v0.1.0/nim-ci.sh -LsSf > nim-ci.sh
   source nim-ci.sh
-  install_nim
   ```
 
 2. Run your tests
@@ -91,7 +90,7 @@ These environment variables can be customized in your GitHub/Travis config. If u
 
 * `USE_CHOOSENIM` - If set to `yes`, Nim will be installed using [choosenim](https://github.com/dom96/choosenim). If set to `no`, Nim will be installed either via a nightly binary (when `NIM_VERSION` is `devel`) or built and installed from source (when `NIM_VERSION` is not `devel`). Default: `yes` when `CPU_ARCH` is `amd64`, `no` otherwise.
 
-After running `source nim-ci.sh`, the above variables will be set, containing either your values (normalized) or the defaults. If you need to configure beyond setting these variables, you can of course edit the `build.yml` or `.travis.yml` files in your repo to suit your needs. Please do submit pull requests for improvements!
+After running `source nim-ci.sh`, Nim will be installed and the above variables will be set, containing either your values (normalized) or the defaults. If you need to configure beyond setting these variables, you can of course edit the `build.yml` or `.travis.yml` files in your repo to suit your needs. Please do submit pull requests for improvements.
 
 ### Generated environment variables
 
@@ -125,6 +124,6 @@ In addition to the above configurable variables, `nim-ci.sh` exports the followi
 
 * `build_nim_project` - If `NIM_PROJECT_TYPE` is `executables`, this will run `nimble install -y`. If `NIM_PROJECT_TYPE` is `library`, this will run `nimble develop -y`. Takes no arguments, no return value.
 
-* `make_artifact` - If `NIM_PROJECT_TYPE` is `executables`, this will place the project's binaries in `DIST_DIR` and create the tarball/zipfile containing those binaries at `ZIP_PATH`. If `NIM_PROJECT_TYPE` is `library`, this is a no-op. Takes no arguments, no return value.
+* `make_artifact` - If `NIM_PROJECT_TYPE` is `executables`, this will place the project's binaries in `DIST_DIR` and create the tarball/zipfile containing those binaries at `ZIP_PATH`. If `NIM_PROJECT_TYPE` is `library`, this is a no-op. Takes no arguments, no return value.x
 
-* `install_nim` - Install Nim and place it in `PATH`. This will use [choosenim](https://github.com/dom96/choosenim) when available for the architecture, otherwise will build Nim from source or use a nightly build, depending on the requested `NIM_VERSION`. Takes no arguments, no return value.
+Happy hacking!

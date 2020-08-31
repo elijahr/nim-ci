@@ -360,6 +360,8 @@ init () {
     export USE_CHOOSENIM=no
   fi
 
+  install_nim
+
   # Autodetect the location of the nim project if not explicitly provided.
   if [[ -z "$NIM_PROJECT_DIR" ]]
   then
