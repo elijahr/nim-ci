@@ -110,9 +110,9 @@ jobs:
           architecture: ${{ matrix.arch }}
           distribution: ubuntu18.04
           env: NIM_VERSION=${{ matrix.nim_version }} NIM_CI_VERSION=github-workflows
-          additionalArgs: | \
+          additionalArgs: |
             -v "~/.chooseni-linux_${{ matrix.arch }}":"/root/.choosenim" \
-            -v "~/.nimble-linux_${{ matri.arch }}":"/root/.nimble"
+            -v "~/.nimble-linux_${{ matrix.arch }}":"/root/.nimble"
           run: |
             # Install system package
             apt-get update -q
