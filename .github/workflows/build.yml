@@ -95,7 +95,7 @@ jobs:
         uses: elijahr/run-on-arch-action@env-vars
         with:
           architecture: ${{ matrix.arch }}
-          distribution: ubuntu-18.04
+          distribution: ubuntu18.04
           env: NIM_VERSION=${{ matrix.nim_version }} NIM_CI_VERSION=github-workflows
           run: |
             # Install system packages
