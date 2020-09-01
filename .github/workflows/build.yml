@@ -8,16 +8,25 @@ on:
     branches: [ '*' ]
 
 jobs:
-  # Build for amd64
   build:
-    name: Build ${{ matrix.os }} amd64
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.nim_host_os }}_${{ matrix.nim_cpu_arch }}
+    runs-on: ${{ matrix.builder }}
+    # fail-fast: false
 
     strategy:
       matrix:
-        # os: [ubuntu-latest, windows-latest, macos-latest]
-        os: [ ubuntu-latest ]
         nim_version: [ devel ]
+        # Should match nim's system.hostOS values
+        nim_host_os: [linux, macosx, windows]
+        # Should match nim's system.hostCPU values
+        nim_host_cpu: [ amd64 ]
+        include:
+          - host_os: linux
+            builder: ubuntu-latest
+          - host_os: macosx
+            builder: macos-latest
+          - host_os: windows
+            builder: windows-latest
 
     steps:
       - name: Checkout repo
@@ -35,56 +44,69 @@ jobs:
           key: ${{ runner.os }}
 
       - name: Install & build
+        id: build
         env:
           NIM_VERSION: ${{ matrix.nim_version }}
-          CPU_ARCH: amd64
-          OS_NAME: ${{ matrix.os }}
+          NIM_CI_VERSION: github-workflows # or vX.Y.Z to lock to a specific nim-ci version
         shell: bash
         run: |
-          curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
+          curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
           source nim-ci.sh
 
           # If this nim project is a library, install it.
-          # If this nim project exports executables, build them.
-          build_nim_project
+          # If this nim project exports binaries, build them.
+          install_nim_project
 
-          # If this nim project exports executables, zip them.
+          # If this nim project exports binaries, zip them.
           # No-op for NIM_PROJECT_TYPE==library projects.
-          make_artifact
+          make_zipball
 
           # Run unit tests
           cd "$NIM_PROJECT_DIR"
           nimble test
           cd -
 
-      - name: Upload binary artifact for amd64
+      - name: Upload binary zipball for amd64
+        if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v2
         with:
-          path: |
-            dist/*.tar.xz
-            dist/*.zip
-        if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
+          path: ${{ steps.build.outputs.ZIP_PATH }}
 
   # Build for Linux aarch64 (arm64), ppc64le, etc
-  build-linux-other-archs:
-    name: Build linux ${{ matrix.arch }}
+  build-other-archs:
+    name: Build ${{ matrix.nim_host_os }}_${{ matrix.nim_cpu_arch }}
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         nim_version: [ stable ]
-        arch: [aarch64] #, ppc64le]
+        # Should match nim's system.hostOS values
+        nim_host_os: [ linux ]
+        # Should match nim's system.hostCPU values
+        nim_host_cpu: [ arm64, powerpc64el]
+        # 1:1 with nim_host_cpu, but different format. List here:
+        # https://github.com/uraimo/run-on-arch-action/tree/master/Dockerfiles
+        arch: [ aarch64, ppc64le]
+        include:
+          - nim_host_os: linux
+            nim_host_cpu: arm64
+            arch: aarch64
+          # - nim_host_os: linux
+          #   nim_host_cpu: powerpc64el
+          #   arch: ppc64le
 
     steps:
-      # Use the run-on-arch-action action to run a docker emulating the
-      # requested CPU architecture.
+      # Use run-on-arch-action to emulate the CPU architecture.
       # See https://github.com/uraimo/run-on-arch-action for docs.
-      - name: Build ${{ matrix.arch }}
-        id: build_arch
+      - name: Build
+        id: build
         uses: uraimo/run-on-arch-action@v1.1.0
         with:
           architecture: ${{ matrix.arch }}
           distribution: buster
+          env:
+            NIM_VERSION: ${{ matrix.nim_version }}
+            NIM_CI_VERSION: github-workflows # or vX.Y.Z to lock to a specific nim-ci version
           run: |
             # Install system packages
             export DEBIAN_FRONTEND=noninteractive
@@ -92,36 +114,28 @@ jobs:
             apt-get install -q -y build-essential git curl bash
 
             # Checkout repo
-            ref=`basename $GITHUB_REF`
+            ref=$(basename $GITHUB_REF)
             git clone -b $ref --single-branch "https://github.com/${GITHUB_REPOSITORY}.git" repo
 
             cd repo
 
-            # Setup vars for nim-ci.sh
-            export \
-              NIM_VERSION=${{ matrix.nim_version }} \
-              CPU_ARCH=${{ matrix.arch }} \
-              OS_NAME=linux \
-
-            curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
+            curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
             source nim-ci.sh
 
             # If this nim project is a library, install it.
-            # If this nim project exports executables, build them.
-            build_nim_project
+            # If this nim project exports binaries, build them.
+            install_nim_project
 
-            # If this nim project exports executables, zip them.
+            # If this nim project exports binaries, zip them.
             # No-op for NIM_PROJECT_TYPE==library projects.
-            make_artifact
+            make_zipball
 
             # Run unit tests
             cd "$NIM_PROJECT_DIR"
             nimble test
 
-      - name: Upload binary artifact for ${{ matrix.arch }}
+      - name: Upload binary zipball
+        if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v2
         with:
-          path: |
-            repo/dist/*.tar.xz
-            repo/dist/*.zip
-        if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
+          path: ${{ steps.build.outputs.ZIP_PATH }}

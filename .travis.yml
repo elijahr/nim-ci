@@ -48,12 +48,12 @@ install:
 
 script:
   # If this nim project is a library, install it.
-  # If this nim project exports executables, build them.
-  - build_nim_project
+  # If this nim project exports binaries, build them.
+  - install_nim_project
 
-  # If this nim project exports executables, zip them.
+  # If this nim project exports binaries, zip them.
   # No-op for NIM_PROJECT_TYPE==library projects.
-  - make_artifact
+  - make_zipball
 
   # Run unit tests
   - |

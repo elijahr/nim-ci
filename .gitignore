@@ -1,4 +1,4 @@
-tests/nim_ci_test_bin/bin
-tests/nim_ci_test_bin/dist
-tests/nim_ci_test_bin/tests/test
-tests/nim_ci_test_lib/tests/test
+.vscode
+tests/**/bin
+tests/**/dist
+tests/nimcitester/src/nimcitester

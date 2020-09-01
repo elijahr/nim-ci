@@ -6,10 +6,10 @@ author        = "Elijah Shaw-Rutschman"
 description   = "Package for testing nim-ci"
 license       = "MIT"
 srcDir        = "src"
+binDir        = "bin"
+bin           = @["nimcihybrid1", "nimcihybrid2"]
+installDirs    = @["nimcihybridpkg"]
 
 # Dependencies
 requires "nim >= 0.16.0"
 
-task test, "Runs the test suite":
-  withDir "tests":
-    exec "nim c -r test.nim"
