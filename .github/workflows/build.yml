@@ -39,7 +39,7 @@ jobs:
           path: |
             ~/.choosenim
             ~/.nimble
-          key: ${{ runner.os }}
+          key: build-${{ runner.os }}
 
       - name: Install & build
         id: build
@@ -64,7 +64,7 @@ jobs:
           nimble test
           cd -
 
-      - name: Upload binary zipball for amd64
+      - name: Upload zipball
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v2
         with:
@@ -88,6 +88,19 @@ jobs:
           #   nim_version: stable
 
     steps:
+      - name: Make dirs
+        run: |
+          mkdir -p ~/.choosenim-${{ matrix.arch }}
+          mkdir -p ~/.nimble-${{ matrix.arch }}
+
+      - name: Setup cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.choosenim-linux_${{ matrix.arch }}
+            ~/.nimble-linux_${{ matrix.arch }}
+          key: build-other-archs
+
       # Use run-on-arch-action to emulate the CPU architecture.
       # See https://github.com/uraimo/run-on-arch-action for docs.
       - name: Build
@@ -97,9 +110,9 @@ jobs:
           architecture: ${{ matrix.arch }}
           distribution: ubuntu18.04
           env: NIM_VERSION=${{ matrix.nim_version }} NIM_CI_VERSION=github-workflows
+          additionalArgs: -v "~/.chooseni-linux_${{ matrix.arch }}":"/root/.choosenim" -v "~/.nimble-linux_${{ matrix-arch }}":"/root/.nimble"
           run: |
-            # Install system packages
-            export DEBIAN_FRONTEND=noninteractive
+            # Install system package
             apt-get update -q
             apt-get install -q -y build-essential git curl bash
 
@@ -124,7 +137,7 @@ jobs:
             cd "$NIM_PROJECT_DIR"
             nimble test
 
-      - name: Upload binary zipball
+      - name: Upload zipball
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v2
         with:

@@ -9,16 +9,13 @@
 
 * GitHub Actions
   * Linux (`amd64`, `arm64`, `powerpc64el`)
-  * macOs (`amd64`)
+  * macOS (`amd64`)
   * Windows (`amd64`)
 
 * Travis-CI
   * Linux (`amd64`, `arm64`, `powerpc64el`)
-  * macOs (`amd64`)
+  * macOS (`amd64`)
   * Windows (`amd64`)
-
-The `nim-ci.sh` script should work with any CI that can run bash scripts.
-Pull requests with configuration files for other CIs are welcome.
 
 This script is used by various tools like [nimble](https://github.com/nim-lang/nimble),
 [choosenim](https://github.com/dom96/choosenim), and
@@ -48,7 +45,8 @@ git push
 
 ### Other CIs
 
-The [.travis.yml](https://github.com/elijahr/nim-ci/blob/devel/.travis.yml) config is an easy to read example. Essentially:
+The `nim-ci.sh` script should work with any CI that can run bash scripts.
+Pull requests with configuration files for other CIs are welcome. The [.travis.yml](https://github.com/elijahr/nim-ci/blob/devel/.travis.yml) config is an easy to read example to follow. Essentially:
 
 1. Install Nim
 
@@ -99,7 +97,7 @@ In addition to the above configurable variables, `nim-ci.sh` exports the followi
 
 * `BIN_EXT` - `.exe` on Windows, empty otherwise.
 
-* `DIST_DIR` - The interpolated value of `${NIM_PROJECT_PATH}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}`. Any files copied here will be included in the zipball made by calling `make_zipball`.
+* `DIST_DIR` - The interpolated value of `${NIM_PROJECT_PATH}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}`. Any files copied here will be included in the zipball produced by `make_zipball`.
 
 * `HOST_CPU` - The current CPU architecture, corresponding to Nim's [`hostCPU`](https://nim-lang.org/docs/system.html#hostCPU).
 
@@ -129,7 +127,7 @@ In addition to the above configurable variables, `nim-ci.sh` exports the followi
 
 * `installed_nim_version` - echoes the first version of Nim found in PATH. No return code.
 
-* `make_zipball` - If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will copy the project's binaries to `DIST_DIR` and create a zipball from `DIST_DIR` at `ZIP_PATH`. If `NIM_PROJECT_DIR` contains `README*`, `LICENSE*`, `AUTHORS*`, `COPYING*`, `*.txt` or `*.md` files, those will also be included in the zipball. If `NIM_PROJECT_TYPE` is `library`, `make_zipball` is a no-op, unless you have explicitly placed items in `DIST_DIR`. If the project has not been built yet, `make_zipball` will call `install_nim_project` first to build your project's binaries. Takes no arguments, no return code.
+* `make_zipball` - If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will copy the project's binaries to `DIST_DIR` and create a zipball from `DIST_DIR` at `ZIP_PATH`. If `NIM_PROJECT_DIR` contains `README*`, `LICENSE*`, `AUTHORS*`, `COPYING*`, `*.txt` or `*.md` files, those will also be included in the zipball. If `NIM_PROJECT_TYPE` is `library`, `make_zipball` is a no-op, unless you have explicitly placed items in `DIST_DIR`, in which case a zipball is created. If the project has not been built yet, `make_zipball` will call `install_nim_project` first to build your project's binaries. Takes no arguments, no return code.
 
 * `normalize_to_host_cpu` - Normalizes a string such as `aarch64`, `x86_64`, or `ppc64le` to its corresponding value from Nim's [`system.hostCPU`](https://nim-lang.org/docs/system.html#hostCPU). Takes a single arguments and echoes the normalized value. No return code.
 
