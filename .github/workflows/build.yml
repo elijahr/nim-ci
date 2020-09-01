@@ -9,24 +9,22 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.nim_host_os }}_${{ matrix.nim_cpu_arch }}
+    name: Build ${{ matrix.nim_host_os }}_amd64
     runs-on: ${{ matrix.builder }}
     # fail-fast: false
 
     strategy:
       matrix:
-        nim_version: [ devel ]
-        # Should match nim's system.hostOS values
-        nim_host_os: [linux, macosx, windows]
-        # Should match nim's system.hostCPU values
-        nim_host_cpu: [ amd64 ]
         include:
-          - host_os: linux
+          - nim_host_os: linux # Match nim's system.hostOS values
             builder: ubuntu-latest
-          - host_os: macosx
+            nim_version: devel
+          - nim_host_os: macosx # Match nim's system.hostOS values
             builder: macos-latest
-          - host_os: windows
+            nim_version: devel
+          - nim_host_os: windows # Match nim's system.hostOS values
             builder: windows-latest
+            nim_version: devel
 
     steps:
       - name: Checkout repo
@@ -74,26 +72,20 @@ jobs:
 
   # Build for Linux aarch64 (arm64), ppc64le, etc
   build-other-archs:
-    name: Build ${{ matrix.nim_host_os }}_${{ matrix.nim_cpu_arch }}
+    name: Build ${{ matrix.nim_host_os }}_${{ matrix.nim_host_cpu }}
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        nim_version: [ stable ]
-        # Should match nim's system.hostOS values
-        nim_host_os: [ linux ]
-        # Should match nim's system.hostCPU values
-        nim_host_cpu: [ arm64, powerpc64el]
-        # 1:1 with nim_host_cpu, but different format. List here:
-        # https://github.com/uraimo/run-on-arch-action/tree/master/Dockerfiles
-        arch: [ aarch64, ppc64le]
         include:
-          - nim_host_os: linux
-            nim_host_cpu: arm64
-            arch: aarch64
+          - nim_host_os: linux # Match nim's system.hostCPU values
+            nim_host_cpu: arm64 # Match nim's system.hostOS values
+            arch: aarch64 # What run-on-arch-action expects
+            nim_version: stable # The version of Nim to test with
           # - nim_host_os: linux
           #   nim_host_cpu: powerpc64el
           #   arch: ppc64le
+          #   nim_version: stable
 
     steps:
       # Use run-on-arch-action to emulate the CPU architecture.
@@ -107,6 +99,7 @@ jobs:
           additionalArgs:
             -e NIM_VERSION ${{ matrix.nim_version }}
             -e NIM_CI_VERSION github-workflows # or vX.Y.Z to lock to a specific nim-ci version
+
           run: |
             # Install system packages
             export DEBIAN_FRONTEND=noninteractive
