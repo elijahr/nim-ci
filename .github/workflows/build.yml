@@ -96,10 +96,7 @@ jobs:
         with:
           architecture: ${{ matrix.arch }}
           distribution: ubuntu-18.04
-          env:
-            NIM_VERSION: ${{ matrix.nim_version }}
-            NIM_CI_VERSION: github-workflows # or vX.Y.Z to lock to a specific nim-ci version
-          # additionalArgs: -e NIM_VERSION -e NIM_CI_VERSION
+          env: NIM_VERSION=${{ matrix.nim_version }} NIM_CI_VERSION=github-workflows
           run: |
             # Install system packages
             export DEBIAN_FRONTEND=noninteractive
