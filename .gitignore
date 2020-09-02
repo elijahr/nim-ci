@@ -2,3 +2,4 @@
 tests/**/bin
 tests/**/dist
 tests/nimcitester/src/nimcitester
+.DS_Store

@@ -335,24 +335,29 @@ make_zipball () {
       install_nim_project
     fi
 
+    cd "$DIST_DIR"
+
     # Copy binaries to dist dir
     for BIN in ${BINS[@]}
     do
-      cp "${BIN_DIR}/${BIN}${BIN_EXT}" "${DIST_DIR}/"
+      cp "${BIN_DIR}/${BIN}${BIN_EXT}" .
     done
 
     # Copy readme, license, etc
-    cp "${NIM_PROJECT_DIR}/"[Rr][Ee][Aa][Dd][Mm][Ee]* "${DIST_DIR}/" &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"[Ll][Ii][Cc][Ee][Nn][Ss][Ee]* "${DIST_DIR}/" &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"[Cc][Oo][Pp][Yy][Ii][Nn][Gg]* "${DIST_DIR}/" &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"[Aa][Uu][Tt][Hh][Oo][Rr][Ss]* "${DIST_DIR}/" &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"[Cc][Hh][Aa][Nn][Gg][Ee][Ll][Oo][Gg]* "${DIST_DIR}/" &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"*.txt "${DIST_DIR}/" &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"*.md "${DIST_DIR}/" &> /dev/null || true
+    cp "${NIM_PROJECT_DIR}/"[Rr][Ee][Aa][Dd][Mm][Ee]* . &> /dev/null || true
+    cp "${NIM_PROJECT_DIR}/"[Ll][Ii][Cc][Ee][Nn][Ss][Ee]* . &> /dev/null || true
+    cp "${NIM_PROJECT_DIR}/"[Cc][Oo][Pp][Yy][Ii][Nn][Gg]* . &> /dev/null || true
+    cp "${NIM_PROJECT_DIR}/"[Aa][Uu][Tt][Hh][Oo][Rr][Ss]* . &> /dev/null || true
+    cp "${NIM_PROJECT_DIR}/"[Cc][Hh][Aa][Nn][Gg][Ee][Ll][Oo][Gg]* . &> /dev/null || true
+    cp "${NIM_PROJECT_DIR}/"*.txt . &> /dev/null || true
+    cp "${NIM_PROJECT_DIR}/"*.md . &> /dev/null || true
 
-    cd "$DIST_DIR/.."
-    local DIST_NAME=$(basename "$DIST_DIR")
-    tar -c --lzma -f "${ZIP_PATH}" "$DIST_NAME"
+    if [[ "$ZIP_EXT" == ".zip" ]]
+    then
+      zip -r -q "${ZIP_PATH}" .
+    else
+      tar -c --lzma -f "${ZIP_PATH}" .
+    fi
     cd -
     echo "Made zipball $ZIP_PATH"
   else
@@ -514,9 +519,7 @@ init () {
 
   export DIST_DIR="${NIM_PROJECT_DIR}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}"
   mkdir -p "$DIST_DIR"
-
-  export ZIP_NAME="${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${ZIP_EXT}"
-  export ZIP_PATH="${NIM_PROJECT_DIR}/dist/${ZIP_NAME}"
+  export ZIP_PATH="${DIST_DIR}${ZIP_EXT}"
 
   detect_nim_project_type
 
@@ -548,7 +551,6 @@ init () {
   echo "${DUMP_PREFIX}SRC_DIR::$SRC_DIR"
   echo "${DUMP_PREFIX}USE_CHOOSENIM::$USE_CHOOSENIM"
   echo "${DUMP_PREFIX}ZIP_EXT::$ZIP_EXT"
-  echo "${DUMP_PREFIX}ZIP_NAME::$ZIP_NAME"
   echo "${DUMP_PREFIX}ZIP_PATH::$ZIP_PATH"
   echo
   echo "<<< nim-ci config <<<"

@@ -87,7 +87,7 @@ These environment variables can be customized in your GitHub/Travis config. If u
 
 #### `NIM_CI_VERSION`
 
-The version of `nim-ci` to use. Defaults to `devel`.
+The version of `nim-ci` to use. Defaults to `devel`. If the requested version of `nim-ci` is not the currently installed version of `nim-ci`, the requested version will be fetched and sourced instead of the installed version.
 
 #### `NIM_VERSION`
 
@@ -95,7 +95,7 @@ The version of Nim to install and build the project with. One of `devel`, `stabl
 
 #### `NIM_PROJECT_DIR`
 
-The path to the Nim project. Paths relative to the current working directory will be normalized into an absolute path. Default: the closest directory inside the working directory found containing a nimble file (usually this will be the working directory itself).
+The path to the Nim project. Paths relative to the current working directory will be normalized into an absolute path. For example, if the working directory is `/home/travis`, a `NIM_PROJECT_DIR` of `foo` would become `/home/travis/foo` after running `source nim-ci.sh`. Default: the lowest directory in the working directory found containing a .nimble file, up to and including the working directory itself; for example, if both `/home/travis/foo/foo.nimble` and `/home/travis/extras/bar/bar.nimble` exist, `NIM_PROJECT_DIR` will default to `/home/travis/foo`.
 
 #### `USE_CHOOSENIM`
 
@@ -109,11 +109,11 @@ In addition to the above configurable variables, `nim-ci.sh` exports the followi
 
 #### `BINS`
 
-a bash array containing the `bin` entries from the nimble file.
+A bash array containing the `bin` entries from the .nimble file.
 
 #### `BIN_DIR`
 
-`binDir` value from the nimble file.
+The `binDir` value from the .nimble file.
 
 #### `BIN_EXT`
 
@@ -121,7 +121,7 @@ a bash array containing the `bin` entries from the nimble file.
 
 #### `DIST_DIR`
 
-The interpolated value of `${NIM_PROJECT_PATH}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}`. Any files copied to this directory will be included in the zipball produced by `make_zipball`.
+The interpolated value of `${NIM_PROJECT_DIR}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}`, for example `/home/travis/foo/dist/foo-0.1.0-linux_arm64`. Any files placed in this directory will be included in the zipball produced by `make_zipball`.
 
 #### `HOST_CPU`
 
@@ -133,7 +133,7 @@ The current OS, corresponding to Nim's [`hostOS`](https://nim-lang.org/docs/syst
 
 #### `NIM_PROJECT_NAME`
 
-The name of the Nim project.
+The name of the Nim project. For example, given a project containing a `foo.nimble` file, `NIM_PROJECT_NAME` will be `foo`.
 
 #### `NIM_PROJECT_TYPE`
 
@@ -141,23 +141,19 @@ The name of the Nim project.
 
 #### `NIM_PROJECT_VERSION`
 
-The version of the Nim project.
+The `version` value from the .nimble file.
 
 #### `SRC_DIR`
 
-`srcDir` value from the nimble file.
+The `srcDir` value from the .nimble file.
 
 #### `ZIP_EXT`
 
 `.zip` on Windows, `.tar.xz` otherwise.
 
-#### `ZIP_NAME`
-
-The interpolated value of `${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${ZIP_EXT}`.
-
 #### `ZIP_PATH`
 
-The interpolated value of `${NIM_PROJECT_PATH}/dist/${ZIP_NAME}`.
+The absolute path to the zipball created by calling `make_zipball`. This will be the interpolated value of `${NIM_PROJECT_DIR}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${ZIP_EXT}`, for example `/home/travis/foo/dist/foo-0.1.0-linux_arm64.tar.xz`.
 
 ### Functions
 
