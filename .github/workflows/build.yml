@@ -44,10 +44,12 @@ jobs:
       - name: Install & build
         id: build
         env:
+          # Put env vars shared across all matrices here
           NIM_VERSION: ${{ matrix.nim_version }}
           NIM_CI_VERSION: github-workflows # or vX.Y.Z to lock to a specific nim-ci version
         shell: bash
         run: |
+          set -e
           curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
           source nim-ci.sh
 
@@ -109,11 +111,14 @@ jobs:
         with:
           architecture: ${{ matrix.arch }}
           distribution: ubuntu18.04
+          # Put env vars shared across all matrices here
           env: NIM_VERSION=${{ matrix.nim_version }} NIM_CI_VERSION=github-workflows
           additionalArgs:
             -v /home/runner/.choosenim-linux_${{ matrix.arch }}:/root/.choosenim
             -v /home/runner/.nimble-linux_${{ matrix.arch }}:/root/.nimble
           run: |
+            set -e
+
             # Install system package
             apt-get update -q
             apt-get install -q -y build-essential git curl bash
@@ -138,6 +143,7 @@ jobs:
             # Run unit tests
             cd "$NIM_PROJECT_DIR"
             nimble test
+            cd -
 
       - name: Upload zipball
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}

@@ -43,9 +43,13 @@ cache:
     - "$HOME/.choosenim" # cache nim binaries
 
 install:
-  - export NIM_CI_VERSION=github-workflows # or vX.Y.Z to lock to a specific nim-ci version
-  - curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
-  - source nim-ci.sh
+  - |
+    # Put env vars shared across all matrices here
+    export NIM_CI_VERSION=github-workflows # or vX.Y.Z to lock to a specific nim-c version
+  - |
+    set -e
+    curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
+    source nim-ci.sh
 
 script:
   # If this nim project is a library, install it.

@@ -1,8 +1,6 @@
 #!/bin/bash
 
-set -e
-
-export INSTALLED_NIM_CI_VERSION=devel
+export THIS_NIM_CI_VERSION=devel
 
 # TODO - keep this or nah?
 export CHOOSENIM_NO_ANALYTICS=1
@@ -406,26 +404,19 @@ join_string_array () {
 init () {
   # Initialize and normalize env vars, then install Nim.
 
-  if [[ "$NIM_CI_VERSION" != "$INSTALLED_NIM_CI_VERSION" ]]
+  if [[ "$NIM_CI_VERSION" != "$THIS_NIM_CI_VERSION" ]]
   then
-    local NIM_CI_SH="nim-ci-${NIM_CI_VERSION}.sh"
-
     # Download specific version of nim-ci.sh
-    if [[ ! -f "$NIM_CI_SH" ]]
-    then
-      curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > "$NIM_CI_SH"
-    fi
-
-    sed -i "s/^\(export INSTALLED_NIM_CI_VERSION=\)devel\$/\1${NIM_CI_VERSION}/" "$NIM_CI_SH"
+    curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
+    sed -i "s/^\(export THIS_NIM_CI_VERSION=\)\(.*\)\$/\1${NIM_CI_VERSION}/" nim-ci.sh
 
     # Prevent infinite curl loop if there's a bug in nim-ci.sh
-    if [[ -z "$(cat $NIM_CI_SH \
-                | grep \"^export INSTALLED_NIM_CI_VERSION=${NIM_CI_VERSION}\$\" )" ]]
+    if [[ -z "$(grep \"^export THIS_NIM_CI_VERSION=${NIM_CI_VERSION}\$\" nim-ci.sh)" ]]
     then
-      echo "Error installing nim-ci ${NIM_CI_VERSION}. Please file an issue https://github.com/elijahr/nim-ci"
+      echo "Error installing nim-ci.sh ${NIM_CI_VERSION}. Please file an issue https://github.com/elijahr/nim-ci"
       return $RET_ERROR
     fi
-    source $NIM_CI_SH
+    source nim-ci.sh
     return $?
   fi
 

@@ -12,7 +12,7 @@
   * macOS (`amd64`)
   * Windows (`amd64`)
 
-* Travis-CI
+* Travis CI
   * Linux (`amd64`, `arm64`, `powerpc64el`)
   * macOS (`amd64`)
   * Windows (`amd64`)
@@ -34,7 +34,7 @@ git commit -m "Add GitHub Actions"
 git push
 ```
 
-### Travis-CI
+### Travis CI
 
 Run this in your repository:
 
@@ -50,14 +50,15 @@ git push
 The `nim-ci.sh` script should work with any CI that can run bash scripts.
 Pull requests with configuration files for other CIs are welcome. The [.travis.yml](https://github.com/elijahr/nim-ci/blob/devel/.travis.yml) config is an easy to read example to follow. Essentially:
 
-1. Install Nim
+1. Install Nim.
 
   ```sh
+  set -e
   curl https://raw.githubusercontent.com/elijahr/nim-ci/devel/nim-ci.sh -LsSf > nim-ci.sh
-  source nim-ci-wrap.sh
+  source nim-ci.sh
   ```
 
-2. Build project and run tests
+2. Build project and run tests.
 
   ```sh
   install_nim_project
@@ -74,20 +75,20 @@ Pull requests with configuration files for other CIs are welcome. The [.travis.y
 
 ## Configuration
 
-For most projects `nim-ci.sh` shouldn't need any configuration; just install it, enable GitHub Actions/Travis-CI for your repo, and start pushing. CI will build the project and run the test suite for any branch or pull request, using the following matrix:
+For most projects `nim-ci.sh` shouldn't need any configuration; just install it, enable GitHub Actions/Travis CI for your repo, and start pushing. CI will build the project and run the test suite for any branch or pull request, using the following matrix:
 
 * Platforms: `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, `linux_powerpc64el`
 * Nim: `0.20.2`, `1.0.8`, `1.2.6`, `devel`
 
-If your project produces executables, pushing a git tag will cause `nim-ci` to create and upload zipballs to GitHub for `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, and `linux_powerpc64el`. Some configuration is possible through environment variables, see below:
+If your project produces binaries (`NIM_PROJECT_TYPE` of `hybrid` or `binary`), pushing a git tag will cause `nim-ci` to create and upload zipballs to GitHub for `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, and `linux_powerpc64el`. Some configuration is possible through environment variables, see below:
 
 ### Configurable environment variables
 
-These environment variables can be customized in your GitHub/Travis config. If using another CI, set these values prior to running `source nim-ci.sh`:
+These environment variables can be set in your GitHub/Travis config and will be used by `nim-ci.sh`. If using another CI, set these values prior to running `source nim-ci.sh`:
 
 #### `NIM_CI_VERSION`
 
-The version of `nim-ci` to use. Defaults to `devel`. If the requested version of `nim-ci` is not the currently installed version of `nim-ci`, the requested version will be fetched and sourced instead of the installed version.
+The version of `nim-ci.sh` to use. Defaults to `devel`. If the requested version of `nim-ci.sh` is not the currently installed version of `nim-ci.sh`, the requested version will be fetched and sourced instead of the installed version.
 
 #### `NIM_VERSION`
 
@@ -95,7 +96,7 @@ The version of Nim to install and build the project with. One of `devel`, `stabl
 
 #### `NIM_PROJECT_DIR`
 
-The path to the Nim project. Paths relative to the current working directory will be normalized into an absolute path. For example, if the working directory is `/home/travis`, a `NIM_PROJECT_DIR` of `foo` would become `/home/travis/foo` after running `source nim-ci.sh`. Default: the lowest directory in the working directory found containing a .nimble file, up to and including the working directory itself; for example, if both `/home/travis/foo/foo.nimble` and `/home/travis/extras/bar/bar.nimble` exist, `NIM_PROJECT_DIR` will default to `/home/travis/foo`.
+The path to the Nim project. Paths relative to the current working directory will be normalized into an absolute path. For example, if the working directory is `/home/travis`, a `NIM_PROJECT_DIR` of `foo` would become `/home/travis/foo` after running `source nim-ci.sh`. Default: the lowest directory in the working directory found containing a .nimble file, up to and including the working directory itself; for example, if both `/home/travis/foo/foo.nimble` and `/home/travis/extras/bar/bar.nimble` exist, `NIM_PROJECT_DIR` will default to `/home/travis/foo` because it is lower in the directory tree.
 
 #### `USE_CHOOSENIM`
 
