@@ -25,8 +25,9 @@ This script is used by various tools like [nimble](https://github.com/nim-lang/n
 
 ### GitHub Actions
 
+Run this in your repository:
+
 ```sh
-cd path/to/my/repo
 curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/devel/install_github.sh | sh
 git add .github
 git commit -m "Add GitHub Actions"
@@ -35,8 +36,9 @@ git push
 
 ### Travis-CI
 
+Run this in your repository:
+
 ```sh
-cd path/to/my/repo
 curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/devel/install_travis.sh | sh
 git add .travis.yml
 git commit -m "Add Travis CI"
@@ -51,9 +53,8 @@ Pull requests with configuration files for other CIs are welcome. The [.travis.y
 1. Install Nim
 
   ```sh
-  NIM_CI_VERSION=devel # Or vX.Y.Z to lock a specific version of nim-ci
-  curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
-  source nim-ci.sh
+  curl https://raw.githubusercontent.com/elijahr/nim-ci/devel/nim-ci.sh -LsSf > nim-ci.sh
+  source nim-ci-wrap.sh
   ```
 
 2. Build project and run tests
@@ -73,67 +74,122 @@ Pull requests with configuration files for other CIs are welcome. The [.travis.y
 
 ## Configuration
 
-For most projects `nim-ci.sh` shouldn't need any configuration; just install it, enable GitHub Actions/Travis-CI for your repo, and start pushing. Some configuration is possible through environment variables.
+For most projects `nim-ci.sh` shouldn't need any configuration; just install it, enable GitHub Actions/Travis-CI for your repo, and start pushing. CI will build the project and run the test suite for any branch or pull request, using the following matrix:
+
+* Platforms: `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, `linux_powerpc64el`
+* Nim: `0.20.2`, `1.0.8`, `1.2.6`, `devel`
+
+If your project produces executables, pushing a git tag will cause `nim-ci` to create and upload zipballs to GitHub for `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, and `linux_powerpc64el`. Some configuration is possible through environment variables, see below:
 
 ### Configurable environment variables
 
 These environment variables can be customized in your GitHub/Travis config. If using another CI, set these values prior to running `source nim-ci.sh`:
 
-* `NIM_VERSION` - The version of Nim to install and build the project with. One of `devel`, `stable`, or specific release tags such as `0.16.0` or `v1.2.6`. Default: `stable`.
+#### `NIM_CI_VERSION`
 
-* `NIM_PROJECT_DIR` - The path to the Nim project. The value will be normalized into an absolute path. Default: the closest directory inside the working directory found containing a nimble file (usually this will be the working directory itself).
+The version of `nim-ci` to use. Defaults to `devel`.
 
-* `USE_CHOOSENIM` - If set to `yes`, Nim will be installed using [choosenim](https://github.com/dom96/choosenim). If set to `no`, Nim will be installed either via a nightly binary (when `NIM_VERSION` is `devel`) or built and installed from source. Default: `yes` when `HOST_CPU` is `amd64`, `no` otherwise.
+#### `NIM_VERSION`
 
-After `source nim-ci.sh` completes, Nim will be installed and the above variables will be set to defaults or normalized. If you need to customize beyond setting these variables, you can of course edit the `build.yml` or `.travis.yml` files in your repo to suit your needs. Please do submit pull requests for improvements.
+The version of Nim to install and build the project with. One of `devel`, `stable`, or specific release tags such as `0.16.0` or `v1.2.6`. Default: `stable`.
+
+#### `NIM_PROJECT_DIR`
+
+The path to the Nim project. Paths relative to the current working directory will be normalized into an absolute path. Default: the closest directory inside the working directory found containing a nimble file (usually this will be the working directory itself).
+
+#### `USE_CHOOSENIM`
+
+If set to `yes`, Nim will be installed using [choosenim](https://github.com/dom96/choosenim). If set to `no`, Nim will be installed either via a nightly binary (when `NIM_VERSION` is `devel`) or built and installed from source. Default: `yes` when `HOST_CPU` is `amd64`, `no` otherwise.
+
+After `source nim-ci.sh` completes, Nim will be installed and the above variables will be set. If you need to customize the build beyond setting these variables, such as adding or removing target architectures from the build matrix, you can of course edit the `build.yml` or `.travis.yml` files installed in your repo to suit your needs. `nim-ci` also exports some [bash functions](#Functions) that you may find useful for customizing the build steps. If you make any changes that others would find useful, please do submit a pull request.
 
 ### Exported environment variables
 
 In addition to the above configurable variables, `nim-ci.sh` exports the following environment variables.
 
-* `BINS` - a bash array containing the `bin` entries from the nimble file.
+#### `BINS`
 
-* `BIN_DIR` - `binDir` value from the nimble file.
+a bash array containing the `bin` entries from the nimble file.
 
-* `BIN_EXT` - `.exe` on Windows, empty otherwise.
+#### `BIN_DIR`
 
-* `DIST_DIR` - The interpolated value of `${NIM_PROJECT_PATH}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}`. Any files copied here will be included in the zipball produced by `make_zipball`.
+`binDir` value from the nimble file.
 
-* `HOST_CPU` - The current CPU architecture, corresponding to Nim's [`hostCPU`](https://nim-lang.org/docs/system.html#hostCPU).
+#### `BIN_EXT`
 
-* `HOST_OS` - The current OS, corresponding to Nim's [`hostOS`](https://nim-lang.org/docs/system.html#hostOS).
+`.exe` on Windows, empty otherwise.
 
-* `NIM_PROJECT_NAME` - The name of the Nim project.
+#### `DIST_DIR`
 
-* `NIM_PROJECT_TYPE` - [`library`](https://github.com/nim-lang/nimble#libraries), [`binary`](https://github.com/nim-lang/nimble#binary-packages), or [`hybrid`](https://github.com/nim-lang/nimble#hybrids).
+The interpolated value of `${NIM_PROJECT_PATH}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}`. Any files copied to this directory will be included in the zipball produced by `make_zipball`.
 
-* `NIM_PROJECT_VERSION` - The version of the Nim project.
+#### `HOST_CPU`
 
-* `SRC_DIR` - `srcDir` value from the nimble file.
+The current CPU architecture, corresponding to Nim's [`hostCPU`](https://nim-lang.org/docs/system.html#hostCPU).
 
-* `ZIP_EXT` - `.zip` on Windows, `.tar.xz` otherwise.
+#### `HOST_OS`
 
-* `ZIP_NAME` - The interpolated value of `${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${ZIP_EXT}`.
+The current OS, corresponding to Nim's [`hostOS`](https://nim-lang.org/docs/system.html#hostOS).
 
-* `ZIP_PATH` - The interpolated value of `${NIM_PROJECT_PATH}/dist/${ZIP_NAME}`.
+#### `NIM_PROJECT_NAME`
+
+The name of the Nim project.
+
+#### `NIM_PROJECT_TYPE`
+
+[`library`](https://github.com/nim-lang/nimble#libraries), [`binary`](https://github.com/nim-lang/nimble#binary-packages), or [`hybrid`](https://github.com/nim-lang/nimble#hybrids).
+
+#### `NIM_PROJECT_VERSION`
+
+The version of the Nim project.
+
+#### `SRC_DIR`
+
+`srcDir` value from the nimble file.
+
+#### `ZIP_EXT`
+
+`.zip` on Windows, `.tar.xz` otherwise.
+
+#### `ZIP_NAME`
+
+The interpolated value of `${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${ZIP_EXT}`.
+
+#### `ZIP_PATH`
+
+The interpolated value of `${NIM_PROJECT_PATH}/dist/${ZIP_NAME}`.
 
 ### Functions
 
 `nim-ci.sh` exports some bash functions:
 
-* `add_path` - Add an entry to `PATH` in a cross-CI-platform way. For instance, GitHub Actions requires an additional step beyond simply setting `export PATH=foo:$PATH`. Takes a single argument, the path to add. No return code.
+#### `add_path <path>`
 
-* `install_nim_project` - If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will run `nimble install -y`. If `NIM_PROJECT_TYPE` is `library`, this will run `nimble develop -y`. Takes no arguments, no return code.
+Add an entry to `PATH` in a cross-CI-platform way. For instance, GitHub Actions requires an additional step beyond simply setting `export PATH=foo:$PATH`.
 
-* `installed_nim_version` - echoes the first version of Nim found in PATH. No return code.
+#### `install_nim_project`
 
-* `make_zipball` - If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will copy the project's binaries to `DIST_DIR` and create a zipball from `DIST_DIR` at `ZIP_PATH`. If `NIM_PROJECT_DIR` contains `README*`, `LICENSE*`, `AUTHORS*`, `COPYING*`, `*.txt` or `*.md` files, those will also be included in the zipball. If `NIM_PROJECT_TYPE` is `library`, `make_zipball` is a no-op, unless you have explicitly placed items in `DIST_DIR`, in which case a zipball is created. If the project has not been built yet, `make_zipball` will call `install_nim_project` first to build your project's binaries. Takes no arguments, no return code.
+ If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will run `nimble install -y`. If `NIM_PROJECT_TYPE` is `library`, this will run `nimble develop -y`.
 
-* `normalize_to_host_cpu` - Normalizes a string such as `aarch64`, `x86_64`, or `ppc64le` to its corresponding value from Nim's [`system.hostCPU`](https://nim-lang.org/docs/system.html#hostCPU). Takes a single arguments and echoes the normalized value. No return code.
+#### `installed_nim_version`
 
-* `normalize_to_host_os` - Normalizes a string such as `Ubuntu`, `mingw`, or `osx` to its corresponding value from Nim's [`system.hostOS`](https://nim-lang.org/docs/system.html#hostOS). Takes a single arguments and echoes the normalized value. No return code.
+Echoes the first version of Nim found in `PATH`.
 
-* `stable_nim_version` - Fetches and echoes the current stable version tag of Nim. No return code.
+#### `make_zipball`
+
+If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will copy the project's binaries to `DIST_DIR` and create a zipball from `DIST_DIR` at `ZIP_PATH`. If `NIM_PROJECT_DIR` contains `README*`, `LICENSE*`, `AUTHORS*`, `COPYING*`, `*.txt` or `*.md` files, those will also be included in the zipball. If `NIM_PROJECT_TYPE` is `library`, `make_zipball` is a no-op, unless you have explicitly placed items in `DIST_DIR`, in which case a zipball is created. If the project has not been built yet, `make_zipball` will call `install_nim_project` first to build your project's binaries.
+
+#### `normalize_to_host_cpu <cpu>`
+
+Echose the normalization of string `<cpu>` such as `aarch64`, `x86_64`, or `ppc64le` to its corresponding value from Nim's [`system.hostCPU`](https://nim-lang.org/docs/system.html#hostCPU).
+
+#### `normalize_to_host_os <os>`
+
+Echoes the normalization of string `<os>` such as `Ubuntu`, `mingw`, or `osx` to its corresponding value from Nim's [`system.hostOS`](https://nim-lang.org/docs/system.html#hostOS).
+
+#### `stable_nim_version`
+
+Fetches and echoes the current stable version tag of Nim. No return code.
 
 ___
 

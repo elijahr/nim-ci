@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 mkdir -p .github/workflows
 curl https://raw.githubusercontent.com/elijahr/nim-ci/devel/.github/workflows/build.yml -LsSf > .github/workflows/build.yml

@@ -2,12 +2,14 @@
 
 set -e
 
+export INSTALLED_NIM_CI_VERSION=devel
+
 # TODO - keep this or nah?
 export CHOOSENIM_NO_ANALYTICS=1
 
 # return codes
-export RET_DOWNLOADED=0
-export RET_NOT_DOWNLOADED=1
+export RET_OK=0
+export RET_ERROR=1
 
 declare -a BINS
 BINS=()
@@ -130,13 +132,13 @@ download_nightly() {
     then
       add_path "$NIM_DIR/bin"
       echo "Installed nightly build $NIGHTLY_DOWNLOAD_URL"
-      return $RET_DOWNLOADED
+      return $RET_OK
     else
       echo "Error installing Nim"
     fi
   fi
 
-  return $RET_NOT_DOWNLOADED
+  return $RET_ERROR
 }
 
 stable_nim_version () {
@@ -166,7 +168,7 @@ install_nim_nightly_or_build_nim () {
   then
     # Try downloading nightly build
     download_nightly
-    if [[ "$?" == "$RET_DOWNLOADED" ]]
+    if [[ "$?" == "$RET_OK" ]]
     then
       # Nightly build was downloaded
       return
@@ -360,12 +362,11 @@ make_zipball () {
 
 install_nim () {
   # Check if Nim@NIM_VERSION is already installed, and if not, install it.
-
   if [[ "$NIM_VERSION" == "stable" \
         && "$(installed_nim_version)" == "$(stable_nim_version)" ]]
   then
     echo "Nim stable ($(stable_nim_version)) already installed"
-    return 0
+    return
   fi
 
   if [[ "$NIM_VERSION" != "devel" \
@@ -373,7 +374,7 @@ install_nim () {
              || "$(installed_nim_version)" == "v${NIM_VERSION}" ) ]]
   then
     echo "Nim $NIM_VERSION already installed"
-    return 0
+    return
   fi
 
   if [[ "$USE_CHOOSENIM" == "yes" ]]
@@ -399,6 +400,29 @@ join_string_array () {
 
 init () {
   # Initialize and normalize env vars, then install Nim.
+
+  if [[ "$NIM_CI_VERSION" != "$INSTALLED_NIM_CI_VERSION" ]]
+  then
+    local NIM_CI_SH="nim-ci-${NIM_CI_VERSION}.sh"
+
+    # Download specific version of nim-ci.sh
+    if [[ ! -f "$NIM_CI_SH" ]]
+    then
+      curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > "$NIM_CI_SH"
+    fi
+
+    sed -i "s/^\(export INSTALLED_NIM_CI_VERSION=\)devel\$/\1${NIM_CI_VERSION}/" "$NIM_CI_SH"
+
+    # Prevent infinite curl loop if there's a bug in nim-ci.sh
+    if [[ -z "$(cat $NIM_CI_SH \
+                | grep \"^export INSTALLED_NIM_CI_VERSION=${NIM_CI_VERSION}\$\" )" ]]
+    then
+      echo "Error installing nim-ci ${NIM_CI_VERSION}. Please file an issue https://github.com/elijahr/nim-ci"
+      return $RET_ERROR
+    fi
+    source $NIM_CI_SH
+    return $?
+  fi
 
   # Use Nim stable if NIM_VERSION not set.
   # An earlier version of this script used BRANCH as the env var name.
@@ -469,7 +493,7 @@ init () {
   if [[ ! -d "$NIM_PROJECT_DIR" ]]
   then
     echo "Could not find directory containing .nimble file"
-    exit 1
+    return $RET_ERROR
   fi
 
   # Make NIM_PROJECT_DIR absolute
@@ -529,6 +553,8 @@ init () {
   echo
   echo "<<< nim-ci config <<<"
   echo
+
+  return $RET_OK
 }
 
 init

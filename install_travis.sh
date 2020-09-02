@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 curl https://raw.githubusercontent.com/elijahr/nim-ci/devel/.travis.yml -LsSf > .travis.yml
 echo "Installed .travis.yml. Next steps:"
