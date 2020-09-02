@@ -53,8 +53,8 @@ Pull requests with configuration files for other CIs are welcome. The [.travis.y
 1. Install Nim.
 
   ```sh
-  set -e
-  curl https://raw.githubusercontent.com/elijahr/nim-ci/devel/nim-ci.sh -LsSf > nim-ci.sh
+  export NIM_CI_VERSION=devel # or vX.Y.Z to lock to a specific nim-ci version
+  curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
   source nim-ci.sh
   ```
 
@@ -86,11 +86,11 @@ Some configuration is possible through environment variables, see below:
 
 ### Configurable environment variables
 
-These environment variables can be set in your GitHub/Travis config and will be used by `nim-ci.sh`. If using another CI, set these values prior to running `source nim-ci.sh`:
+These environment variables can be set in your GitHub/Travis config. If using another CI, set these values prior to running `source nim-ci.sh`:
 
 #### `NIM_CI_VERSION`
 
-The version of `nim-ci.sh` to use. Defaults to `devel`. If the requested version of `nim-ci.sh` is not the currently installed version of `nim-ci.sh`, the requested version will be fetched and sourced instead of the installed version.
+The version of `nim-ci.sh` to use. Defaults to `devel`.
 
 #### `NIM_VERSION`
 

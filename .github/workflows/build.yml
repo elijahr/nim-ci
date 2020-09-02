@@ -49,7 +49,6 @@ jobs:
           NIM_CI_VERSION: github-workflows # or vX.Y.Z to lock to a specific nim-ci version
         shell: bash
         run: |
-          set -e
           curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
           source nim-ci.sh
 
@@ -117,8 +116,6 @@ jobs:
             -v /home/runner/.choosenim-linux_${{ matrix.arch }}:/root/.choosenim
             -v /home/runner/.nimble-linux_${{ matrix.arch }}:/root/.nimble
           run: |
-            set -e
-
             # Install system package
             apt-get update -q
             apt-get install -q -y build-essential git curl bash
