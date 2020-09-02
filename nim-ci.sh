@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export THIS_NIM_CI_VERSION=devel
+export THIS_NIM_CI_VERSION=github-workflows
 
 # TODO - keep this or nah?
 export CHOOSENIM_NO_ANALYTICS=1
@@ -102,7 +102,7 @@ download_nightly() {
   then
     mkdir -p "${HOME}/.cache/nim-ci"
     local NIGHTLY_ARCHIVE="${HOME}/.cache/nim-ci/$(basename $NIGHTLY_DOWNLOAD_URL)"
-    curl $NIGHTLY_DOWNLOAD_URL -SsLf > $NIGHTLY_ARCHIVE
+    curl $NIGHTLY_DOWNLOAD_URL -SsLf -o $NIGHTLY_ARCHIVE
   else
     echo "No nightly build available for $HOST_OS $HOST_CPU"
   fi
@@ -228,7 +228,7 @@ install_nim_with_choosenim () {
       cd -
     fi
 
-    curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
+    curl https://nim-lang.org/choosenim/init.sh -sSf -o init.sh
     sh init.sh -y
     cp "${HOME}/.nimble/bin/choosenim$BIN_EXT" "${GITBIN}/"
 
@@ -403,22 +403,41 @@ join_string_array () {
 
 init () {
   # Initialize and normalize env vars, then install Nim.
+  if [[ -z "$NIM_CI_VERSION" ]]
+  then
+    export NIM_CI_VERSION=$THIS_NIM_CI_VERSION
+  fi
 
   if [[ "$NIM_CI_VERSION" != "$THIS_NIM_CI_VERSION" ]]
   then
     # Download specific version of nim-ci.sh
-    curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
-    sed -i "s/^\(export THIS_NIM_CI_VERSION=\)\(.*\)\$/\1${NIM_CI_VERSION}/" nim-ci.sh
-
-    # Prevent infinite curl loop if there's a bug in nim-ci.sh
-    if [[ -z "$(grep \"^export THIS_NIM_CI_VERSION=${NIM_CI_VERSION}\$\" nim-ci.sh)" ]]
+    local NIM_CI_SH="nim-ci-${NIM_CI_VERSION}.sh"
+    curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf -o $NIM_CI_SH
+    if [[ "$?" != "0" ]]
     then
-      echo "Error installing nim-ci.sh ${NIM_CI_VERSION}. Please file an issue https://github.com/elijahr/nim-ci"
+      echo
+      echo "Error: ${NIM_CI_VERSION} is not a valid nim-ci version tag."
+      echo
+      return $RET_ERROR
+    else
+      # Mark the version
+      sed -i "s/^\(export THIS_NIM_CI_VERSION=\)\(.*\)\$/\1${NIM_CI_VERSION}/" $NIM_CI_SH
+    fi
+
+    # Prevent infinite curls
+    if [[ -z "$(grep \"^export THIS_NIM_CI_VERSION=${NIM_CI_VERSION}\$\" ${NIM_CI_SH})" ]]
+    then
+      echo
+      echo "Error installing nim-ci. Please report an issue @ https://github.com/elijahr/nim-ci"
+      echo
       return $RET_ERROR
     fi
-    source nim-ci.sh
+
+    source $NIM_CI_SH
     return $?
   fi
+
+  echo "Using nim-ci.sh ${NIM_CI_VERSION}"
 
   # Use Nim stable if NIM_VERSION not set.
   # An earlier version of this script used BRANCH as the env var name.

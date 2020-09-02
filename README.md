@@ -75,12 +75,14 @@ Pull requests with configuration files for other CIs are welcome. The [.travis.y
 
 ## Configuration
 
-For most projects `nim-ci.sh` shouldn't need any configuration; just install it, enable GitHub Actions/Travis CI for your repo, and start pushing. CI will build the project and run the test suite for any branch or pull request, using the following matrix:
+For most projects, `nim-ci.sh` won't need any configuration; just install the CI configs, enable GitHub Actions or Travis CI for your repo, and start pushing. CI will build the project and run the test suite for any branch or pull request, using the following matrix:
 
 * Platforms: `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, `linux_powerpc64el`
 * Nim: `0.20.2`, `1.0.8`, `1.2.6`, `devel`
 
-If your project produces binaries (`NIM_PROJECT_TYPE` of `hybrid` or `binary`), pushing a git tag will cause `nim-ci` to create and upload zipballs to GitHub for `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, and `linux_powerpc64el`. Some configuration is possible through environment variables, see below:
+If your .nimble file specifies `bins`, pushing a git tag will build and upload zipball artifacts to GitHub for `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, and `linux_powerpc64el`. See [`make_zipball`](#make_zipball).
+
+Some configuration is possible through environment variables, see below:
 
 ### Configurable environment variables
 
