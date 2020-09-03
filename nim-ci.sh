@@ -372,15 +372,19 @@ install_nim () {
     return
   fi
 
+  add_path "${HOME}/.nimble/bin"
+
   if [[ "$USE_CHOOSENIM" == "yes" ]]
   then
     install_nim_with_choosenim
+    local RET=$?
   else
     # fallback for platforms that don't have choosenim binaries
     install_nim_nightly_or_build_nim
+    local RET=$?
   fi
 
-  add_path "${HOME}/.nimble/bin"
+  return $RET
 }
 
 join_string_array () {
@@ -452,6 +456,11 @@ init () {
   export NIM_PROJECT_NAME=$(basename "$NIMBLE_FILE" | sed -n 's/\(.*\)\.nimble$/\1/p')
 
   install_nim
+  if [[ "$?" != 0 ]]
+  then
+    echo "Error installing Nim"
+    exit 1
+  fi
 
   cd "$NIM_PROJECT_DIR"
   export NIM_PROJECT_VERSION=$(\

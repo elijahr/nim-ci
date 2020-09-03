@@ -26,6 +26,8 @@ before install:
   for pkg in ["nimcibinary", "nimcihybrid", "nimcilibrary"]:
     withDir pkg:
       putEnv("NIM_PROJECT_DIR", ".")
+      echo "PATH IS " & getEnv("PATH")
+      exec "base -c \"find /home/runner/.choosenim/\""
       exec "bash -c \"source " & nimcish & "; all_the_things\""
 
 task clean, "Removes all bin and dist directories":
