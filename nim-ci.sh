@@ -183,9 +183,10 @@ install_nim_nightly_or_build_nim () {
     return $RET_OK
   else
     echo "Building Nim $NIM_VERSION"
-    if [[ "$NIM_VERSION" =~ [0-9] ]]
+    if [[ "$NIM_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]
     then
-      local GITREF="v$NIM_VERSION" # version tag
+       # Semantic version tag
+      local GITREF="v$NIM_VERSION"
     else
       if [[ "$NIM_VERSION" == "stable" ]]
       then
@@ -194,52 +195,52 @@ install_nim_nightly_or_build_nim () {
         local GITREF=$NIM_VERSION
       fi
     fi
-    git clone -b $GITREF \
-      --single-branch https://github.com/nim-lang/Nim.git \
-      $NIMREPO
     cd $NIMREPO
+    git clone -b $GITREF --single-branch https://github.com/nim-lang/Nim.git .
     sh build_all.sh
-    # back to prev directory
     cd -
     return $RET_OK
   fi
 }
 
+install_windows_git () {
+  # Acquire git
+  local GITBIN="${HOME}/.cache/nim-ci/git/bin"
+  mkdir -p "$GITBIN"
+  add_path "$GITBIN"
+  # Setup git outside "Program Files", space breaks cmake sh.exe
+  cd "$GITBIN/.."
+  local PORTABLE_GIT=https://github.com/git-for-windows/git/releases/download/v2.23.0.windows.1/PortableGit-2.23.0-64-bit.7z.exe
+  curl -L -s $PORTABLE_GIT -o portablegit.exe
+  7z x -y -bd portablegit.exe
+  cd -
+}
+
 install_nim_with_choosenim () {
   # Install a Nim binary or build Nim from source, using choosenim
-  local GITBIN="${HOME}/.choosenim/git/bin"
-
-  add_path "$GITBIN"
-
   if ! type -P choosenim &> /dev/null
   then
     echo "Installing choosenim"
-    mkdir -p $GITBIN
     if [[ "$HOST_OS" == "windows" ]]
     then
-      # Setup git outside "Program Files", space breaks cmake sh.exe
-      cd $GITBIN/..
-      local PORTABLE_GIT=https://github.com/git-for-windows/git/releases/download/v2.23.0.windows.1/PortableGit-2.23.0-64-bit.7z.exe
-      curl -L -s $PORTABLE_GIT -o portablegit.exe
-      7z x -y -bd portablegit.exe
-      # back to prev directory
-      cd -
+      install_windows_git
     fi
 
-    curl https://nim-lang.org/choosenim/init.sh -sSf -o init.sh
-    sh init.sh -y
-    cp "${HOME}/.nimble/bin/choosenim$BIN_EXT" "${GITBIN}/"
+    curl https://nim-lang.org/choosenim/init.sh -sSf -o choosenim-init.sh
+    sh choosenim-init.sh -y
+    # cp "${HOME}/.nimble/bin/choosenim$BIN_EXT" "${GITBIN}/"
 
-    # Copy DLLs for choosenim
-    if [[ "$HOST_OS" == "windows" ]]
-    then
-      cp "${HOME}/.nimble/bin"/*.dll "${GITBIN}/"
-    fi
+    # # Copy DLLs for choosenim
+    # if [[ "$HOST_OS" == "windows" ]]
+    # then
+    #   cp "${HOME}/.nimble/bin"/*.dll "${GITBIN}/"
+    # fi
+    echo "Installed choosenim"
   else
     echo "choosenim already installed"
   fi
 
-  rm -rf "${HOME}/.choosenim/current"
+  # rm -rf "${HOME}/.choosenim/current"
   choosenim update $NIM_VERSION --yes
   choosenim $NIM_VERSION --yes
 }
@@ -286,8 +287,6 @@ detect_nim_project_type () {
     mkdir -p "${BIN_DIR}"
     export BIN_DIR=$(cd "$BIN_DIR"; pwd)
   fi
-
-  # back to prev directory
   cd -
 }
 
@@ -304,14 +303,12 @@ install_nim_project () {
     # Install library, symlinked
     nimble develop -y
   fi
-
-  # back to prev directory
   cd -
 }
 
 make_bin_dist () {
   # Handle the single bin case
-  for BIN in "${NIM_PROJECT_DIR}/bin/"*
+  for BIN in "${NIM_PROJECT_DIR}/bin"/*
   do
     local BIN_NAME=$(basename "$BIN")
     local SUFFIX="-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${BIN_EXT}"
@@ -361,7 +358,7 @@ install_nim () {
         && "$(installed_nim_version)" == "$(stable_nim_version)" ]]
   then
     echo "Nim stable ($(stable_nim_version)) already installed"
-    return
+    return $RET_OK
   fi
 
   if [[ "$NIM_VERSION" != "devel" \
@@ -369,7 +366,7 @@ install_nim () {
              || "$(installed_nim_version)" == "v${NIM_VERSION}" ) ]]
   then
     echo "Nim $NIM_VERSION already installed"
-    return
+    return $RET_OK
   fi
 
   add_path "${HOME}/.nimble/bin"
