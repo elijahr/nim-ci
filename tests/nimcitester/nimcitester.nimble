@@ -23,14 +23,24 @@ before install:
     echo "Couldn't find nim-ci.sh"
     return false
 
+  let home = getEnv("HOME")
   # run all_the_things for each project
   for pkg in ["nimcibinary", "nimcihybrid", "nimcilibrary"]:
     withDir pkg:
       putEnv("NIM_PROJECT_DIR", ".")
       echo "PATH IS " & getEnv("PATH")
-      exec "bash -c \"find /home/runner/.choosenim/bin\""
-      exec "bash -c \"find /home/runner/.nimble/bin\""
-      exec "bash -c \"find /home/runner/.choosenim/toolchains/nim-#devel/bin/\""
+      try:
+        exec "bash -c \"find "&home&"/.choosenim/bin\""
+      except:
+        discard
+      try:
+        exec "bash -c \"find "&home&"/.nimble/bin\""
+      except:
+        discard
+      try:
+        exec "bash -c \"find "&home&"/.choosenim/toolchains/nim-#devel/bin/\""
+      except:
+        discard
       exec "bash -c \"source " & nimcish & "; all_the_things\""
 
 task clean, "Removes all bin and dist directories":
