@@ -39,11 +39,6 @@ proc binDir(pkg: string): string =
 
 proc binDist(pkg: string, bin: string): string = distDir(pkg)/bin & "-0.1.0-" & hostOS & "_" & hostCPU
 
-proc zipName(pkg: string): string = distName(pkg) & zipExt
-
-proc zipPath(pkg: string): string = projectDir(pkg)/"dist"/zipName(pkg)
-
-
 const useChoosenim =
   when hostCPU == "amd64": "yes"
   else: "no"

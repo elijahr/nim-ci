@@ -402,6 +402,14 @@ join_string_array () {
   printf %s "$f" "${@/#/$d}";
 }
 
+find_nimble_file () {
+  echo $(\
+    find "$1" -type f -name "*.nimble" -print \
+        | awk '{ print gsub(/\//, "/"), $0 | "sort -n" }' \
+        | head -n 1 \
+        | sed 's/^[0-9] //')
+}
+
 init () {
   # Initialize and normalize env vars, then install Nim.
 
@@ -444,16 +452,10 @@ init () {
   # Autodetect the location of the nim project if not explicitly provided.
   if [[ -z "${NIM_PROJECT_DIR:-}" ]]
   then
-    local NIMBLE_FILE=$(\
-      find . -type f -name "*.nimble" -print \
-        | awk '{ print gsub(/\//, "/"), $0 | "sort -n" }' \
-        | head -n 1 \
-        | sed 's/^[0-9] //')
+    local NIMBLE_FILE=$(find_nimble_file .)
     export NIM_PROJECT_DIR=$(dirname "$NIMBLE_FILE")
   else
-    local NIMBLE_FILE=$(\
-      find "${NIM_PROJECT_DIR}" -type f -name "*.nimble" -print \
-        | head -n 1)
+    local NIMBLE_FILE=$(find_nimble_file "$NIM_PROJECT_DIR")
   fi
 
   # Make NIM_PROJECT_DIR absolute
