@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -euo pipefail
+# set -u
 
 # TODO - keep this or nah?
 export CHOOSENIM_NO_ANALYTICS=1

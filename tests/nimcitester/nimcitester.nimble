@@ -28,7 +28,10 @@ before install:
     withDir pkg:
       putEnv("NIM_PROJECT_DIR", ".")
       echo "PATH IS " & getEnv("PATH")
-      exec "bash -c \"find /home/runner/.choosenim/\""
+      exec "bash -c \"find /home/runner/.choosenim/bin\""
+      exec "bash -c \"find /home/runner/.nimble/bin\""
+      exec "bash -c \"find /home/runner/.choosenim/toolchains/nim-#devel/bin/\""
+      /home/runner/.choosenim/toolchains/nim-#devel/bin/
       exec "bash -c \"source " & nimcish & "; all_the_things\""
 
 task clean, "Removes all bin and dist directories":
