@@ -13,10 +13,11 @@ requires "nim >= 0.16.0"
 before install:
   # find nim-ci.sh
   var nimcish = ""
-  for dir in [getCurrentDir()&"/../..", getCurrentDir()&"/../.."]:
+  for dir in [getCurrentDir(), getCurrentDir()&"/../..", getCurrentDir()&"/../../.."]:
     echo "Trying " & dir
     if fileExists(dir&"/nim-ci.sh"):
       nimcish = dir&"/nim-ci.sh"
+      break
 
   if nimcish == "":
     echo "Couldn't find nim-ci.sh"
@@ -27,7 +28,7 @@ before install:
     withDir pkg:
       putEnv("NIM_PROJECT_DIR", ".")
       echo "PATH IS " & getEnv("PATH")
-      exec "base -c \"find /home/runner/.choosenim/\""
+      exec "bash -c \"find /home/runner/.choosenim/\""
       exec "bash -c \"source " & nimcish & "; all_the_things\""
 
 task clean, "Removes all bin and dist directories":
