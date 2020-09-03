@@ -138,7 +138,7 @@ download_nightly() {
 
 stable_nim_version () {
   # Echoes the tag name of the current stable version of Nim
-  if [[ -z "$NIM_STABLE_VERSION" ]]
+  if [[ -z "${NIM_STABLE_VERSION:-}" ]]
   then
     export NIM_STABLE_VERSION="$(git ls-remote https://github.com/nim-lang/Nim.git \
       | grep refs/tags/v \
