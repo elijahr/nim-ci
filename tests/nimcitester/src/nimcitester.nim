@@ -31,18 +31,13 @@ proc projectType(pkg: string): string =
     elif pkg == "nimcilibrary": "library"
     else: "binary"
 
-proc distDir(pkg: string): string = projectDir(pkg)/"dist"/distName(pkg)
+proc distDir(pkg: string): string = projectDir(pkg)/"dist"
 
 proc binDir(pkg: string): string =
   if projectType(pkg) in ["binary", "hybrid"]: projectDir(pkg)/"bin"
   else: ""
 
-proc bins(pkg: string): string =
-  result =
-    if pkg == "nimcihybrid": "nimcihybrid1, nimcihybrid2"
-    elif pkg == "nimcibinary": "nimcibinary1, nimcibinary2"
-    elif pkg == "nimcilibrary": ""
-    else: "nimcitester"
+proc binDist(pkg: string, bin: string): string = distDir(pkg)/bin & "-0.1.0-" & hostOS & "_" & hostCPU
 
 proc zipName(pkg: string): string = distName(pkg) & zipExt
 
@@ -59,6 +54,7 @@ proc exec(
     poStdErrToStdOut, poUsePath
   },
   env: StringTableRef = nil,
+  liveOutput: bool = true
 ): tuple[
   output: TaintedString,
   exitCode: int
@@ -74,6 +70,8 @@ proc exec(
   var line = newStringOfCap(120).TaintedString
   while true:
     if outp.readLine(line):
+      if liveOutput:
+        echo line
       result[0].string.add(line.string)
       result[0].string.add("\n")
     else:
@@ -85,21 +83,17 @@ proc exec(
 const config = """
 >>> nim-ci config >>>
 
-$1BINS::$2
-$1BIN_DIR::$3
-$1BIN_EXT::$4
-$1DIST_DIR::$5
-$1HOST_CPU::$6
-$1HOST_OS::$7
-$1NIM_PROJECT_DIR::$8
-$1NIM_PROJECT_NAME::$9
-$1NIM_PROJECT_TYPE::$10
-$1NIM_VERSION::$11
+$1BIN_DIR::$2
+$1BIN_EXT::$3
+$1DIST_DIR::$4
+$1HOST_CPU::$5
+$1HOST_OS::$6
+$1NIM_PROJECT_DIR::$7
+$1NIM_PROJECT_NAME::$8
+$1NIM_PROJECT_TYPE::$9
+$1NIM_VERSION::$10
 $1SRC_DIR::src
-$1USE_CHOOSENIM::$12
-$1ZIP_EXT::$13
-$1ZIP_NAME::$14
-$1ZIP_PATH::$15
+$1USE_CHOOSENIM::$11
 
 <<< nim-ci config <<<
 """.strip
@@ -111,30 +105,31 @@ suite "nim-ci.sh init":
     let (output, exitCode) = exec(nimci())
     check exitCode == 0
     let expected = config % [
-      "", bins(pkg), binDir(pkg), binExt, distDir(pkg), hostCPU, hostOS,
-      projectDir(pkg), pkg, projectType(pkg), "stable", useChoosenim, zipExt,
-      zipName(pkg), zipPath(pkg),
+      "", binDir(pkg), binExt, distDir(pkg), hostCPU, hostOS,
+      projectDir(pkg), pkg, projectType(pkg), "stable", useChoosenim
     ]
     check expected in output
 
   test "sets GitHub Action step outputs":
     let pkg = "nimcitester"
     let env = newStringTable({
+      "PATH": getEnv("PATH"),
       "HOME": getEnv("HOME"),
       "GITHUB_WORKFLOW": "foo",
     })
     let (output, exitCode) = exec(nimci(), env=env)
     check exitCode == 0
     let expected = config % [
-      "::set-output name=", bins(pkg), binDir(pkg), binExt, distDir(pkg),
+      "::set-output name=", binDir(pkg), binExt, distDir(pkg),
       hostCPU, hostOS, projectDir(pkg), pkg, projectType(pkg), "stable",
-      useChoosenim, zipExt, zipName(pkg), zipPath(pkg),
+      useChoosenim,
     ]
     check expected in output
 
   test "is configurable":
     for pkg in ["nimcibinary", "nimcihybrid", "nimcilibrary"]:
       let env = newStringTable({
+        "PATH": getEnv("PATH"),
         "HOME": getEnv("HOME"),
         "NIM_PROJECT_DIR": projectDir(pkg),
         "NIM_VERSION": "devel",
@@ -143,9 +138,8 @@ suite "nim-ci.sh init":
       let (output, exitCode) = exec(nimci(), env=env)
       check exitCode == 0
       let expected = config % [
-        "", bins(pkg), binDir(pkg), binExt, distDir(pkg), hostCPU, hostOS,
-        projectDir(pkg), pkg, projectType(pkg), "devel", "no", zipExt,
-        zipName(pkg), zipPath(pkg),
+        "", binDir(pkg), binExt, distDir(pkg), hostCPU, hostOS,
+        projectDir(pkg), pkg, projectType(pkg), "devel", "no",
       ]
       check expected in output
 
@@ -157,10 +151,10 @@ suite "binary/hybrid":
         check exitCode == 0
         check output.strip == pkg & $i
 
-  test "binaries were built and placed in dist directory by make_zipball":
+  test "binaries were built and placed in dist directory by make_bin_dist":
     for pkg in ["nimcibinary", "nimcihybrid"]:
       for i in 1..2:
-        let (output, exitCode) = exec(distDir(pkg)/pkg & $i)
+        let (output, exitCode) = exec(binDist(pkg, pkg & $i))
         check exitCode == 0
         check output.strip == pkg & $i
 
@@ -176,23 +170,29 @@ suite "binary/hybrid":
           check exitCode == 0
           check output.strip == pkg & $i
 
-  test "zipball is sane":
-    for pkg in ["nimcibinary", "nimcihybrid"]:
-      let outDir = getTempDir()/pkg
-      removeDir(outDir)
-      createDir(outDir)
-      let (output, exitCode) =
-        when defined(windows): exec("unzip -q " & zipPath(pkg) & " -d " & outDir)
-        else: exec("tar xf " & zipPath(pkg) & " -C " & outDir)
-      defer:
-        removeDir(outDir)
-      check exitCode == 0
-      check output.strip == ""
-      check dirExists(outDir/distName(pkg))
-      for i in 1..2:
-        let (output, exitCode) = exec(outDir/distName(pkg)/pkg & $i)
-        check exitCode == 0
-        check output.strip == pkg & $i
+  # test "zipball is sane":
+  #   for pkg in ["nimcibinary", "nimcihybrid"]:
+  #     let outDir = getTempDir()/pkg
+  #     removeDir(outDir)
+  #     createDir(outDir)
+  #     let (output, exitCode) =
+  #       when defined(windows): exec("unzip -q " & zipPath(pkg) & " -d " & outDir)
+  #       else: exec("tar xf " & zipPath(pkg) & " -C " & outDir)
+  #     defer:
+  #       removeDir(outDir)
+  #     check exitCode == 0
+  #     check output.strip == ""
+  #     check dirExists(outDir)
+  #     check fileExists(outDir/"AUTHORS")
+  #     check fileExists(outDir/"COPYING")
+  #     check fileExists(outDir/"LICENSE")
+  #     check fileExists(outDir/"README")
+  #     check fileExists(outDir/"foo.txt")
+  #     check fileExists(outDir/"bar.md")
+  #     for i in 1..2:
+  #       let (output, exitCode) = exec(outDir/pkg & $i)
+  #       check exitCode == 0
+  #       check output.strip == pkg & $i
 
 suite "library/hybrid":
   test "library symlink was installed":

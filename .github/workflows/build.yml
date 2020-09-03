@@ -11,7 +11,7 @@ jobs:
   build:
     name: Build ${{ matrix.nim_host_os }}_amd64
     runs-on: ${{ matrix.builder }}
-    # fail-fast: false
+    fail-fast: false
 
     strategy:
       matrix:
@@ -52,20 +52,9 @@ jobs:
           curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
           source nim-ci.sh
 
-          # If this nim project is a library, install it.
-          # If this nim project exports binaries, build them.
-          install_nim_project
+          all_the_things
 
-          # If this nim project exports binaries, zip them.
-          # No-op for NIM_PROJECT_TYPE==library projects.
-          make_zipball
-
-          # Run unit tests
-          cd "$NIM_PROJECT_DIR"
-          nimble test
-          cd -
-
-      - name: Upload zipball
+      - name: Upload packages
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v2
         with:
@@ -129,18 +118,7 @@ jobs:
             curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
             source nim-ci.sh
 
-            # If this nim project is a library, install it.
-            # If this nim project exports binaries, build them.
-            install_nim_project
-
-            # If this nim project exports binaries, zip them.
-            # No-op for NIM_PROJECT_TYPE==library projects.
-            make_zipball
-
-            # Run unit tests
-            cd "$NIM_PROJECT_DIR"
-            nimble test
-            cd -
+            all_the_things
 
       - name: Upload zipball
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}

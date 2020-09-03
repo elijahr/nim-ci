@@ -13,3 +13,6 @@ skipExt       = @["nim"]
 # Dependencies
 requires "nim >= 0.16.0"
 
+task make_packages, "Builds packages and echoes the resulting paths":
+  echo getEnv("")
+

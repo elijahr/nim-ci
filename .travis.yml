@@ -50,16 +50,5 @@ install:
     curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
     source nim-ci.sh
 
-script:
-  # If this nim project is a library, install it.
-  # If this nim project exports binaries, build them.
-  - install_nim_project
-
-  # If this nim project exports binaries, zip them.
-  # No-op for NIM_PROJECT_TYPE==library projects.
-  - make_zipball
-
-  # Run unit tests
-  - |
-    cd "$NIM_PROJECT_DIR"
-    nimble test
+script
+  - all_the_things

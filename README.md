@@ -61,15 +61,13 @@ Pull requests with configuration files for other CIs are welcome. The [.travis.y
 2. Build project and run tests.
 
   ```sh
-  install_nim_project
-  cd "$NIM_PROJECT_DIR"
-  nimble test
+  all_the_things
   ```
 
-3. If the project produces binaries, `make_zipball` will package them as a zipball.
+3. If the project produces binaries, `make_packages` will package them as a zipball.
 
   ```sh
-  make_zipball
+  make_packages
   # Do something with the zipball now at $ZIP_PATH
   ```
 
@@ -80,7 +78,7 @@ For most projects, `nim-ci.sh` won't need any configuration; just install the CI
 * Platforms: `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, `linux_powerpc64el`
 * Nim: `0.20.2`, `1.0.8`, `1.2.6`, `devel`
 
-If your .nimble file specifies `bins`, pushing a git tag will build and upload zipball artifacts to GitHub for `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, and `linux_powerpc64el`. See [`make_zipball`](#make_zipball).
+If your .nimble file specifies `bins`, pushing a git tag will build and upload zipball artifacts to GitHub for `linux_amd64`, `macosx_amd64`, `windows_amd64`, `linux_arm64`, and `linux_powerpc64el`. See [`make_zipball`](#make_zipball) and [`make_packages`](#make_packages).
 
 Some configuration is possible through environment variables, see below:
 
@@ -166,6 +164,10 @@ The absolute path to the zipball created by calling `make_zipball`. This will be
 
 Add an entry to `PATH` in a cross-CI-platform way. For instance, GitHub Actions requires an additional step beyond simply setting `export PATH=foo:$PATH`.
 
+#### `all_the_things`
+
+Install your project, run its tests, and build distribution packages.
+
 #### `install_nim_project`
 
  If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will run `nimble install -y`. If `NIM_PROJECT_TYPE` is `library`, this will run `nimble develop -y`.
@@ -174,22 +176,45 @@ Add an entry to `PATH` in a cross-CI-platform way. For instance, GitHub Actions 
 
 Echoes the first version of Nim found in `PATH`.
 
+#### `make_packages`
+
+If the project defines a `make_packages` task in its .nimble file, `nimble make_packages` will be called. The task should echo the absolute path to files, one per line, which should be added as assets to a release on GitHub. If the project does not define a `make_packages` task, `make_zipball` will be called.
+
 #### `make_zipball`
 
 If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will copy the project's binaries to `DIST_DIR` and create a zipball from `DIST_DIR` at `ZIP_PATH`. If `NIM_PROJECT_DIR` contains `README*`, `LICENSE*`, `AUTHORS*`, `COPYING*`, `*.txt` or `*.md` files, those will also be included in the zipball. If `NIM_PROJECT_TYPE` is `library`, `make_zipball` is a no-op, unless you have explicitly placed items in `DIST_DIR`, in which case a zipball is created. If the project has not been built yet, `make_zipball` will call `install_nim_project` first to build your project's binaries.
 
 #### `normalize_to_host_cpu <cpu>`
 
-Echose the normalization of string `<cpu>` such as `aarch64`, `x86_64`, or `ppc64le` to its corresponding value from Nim's [`system.hostCPU`](https://nim-lang.org/docs/system.html#hostCPU).
+Normalizes a string such as `aarch64`, `x86_64`, or `ppc64le` to its corresponding value from Nim's [`system.hostCPU`](https://nim-lang.org/docs/system.html#hostCPU and echoes the result.
 
 #### `normalize_to_host_os <os>`
 
-Echoes the normalization of string `<os>` such as `Ubuntu`, `mingw`, or `osx` to its corresponding value from Nim's [`system.hostOS`](https://nim-lang.org/docs/system.html#hostOS).
+Normalizes a string such as `Ubuntu`, `mingw`, or `osx` to its corresponding value from Nim's [`system.hostOS`](https://nim-lang.org/docs/system.html#hostOS) and echoes the result.
 
 #### `stable_nim_version`
 
 Fetches and echoes the current stable version tag of Nim. No return code.
 
-___
+______________________
+
+## TODO
+
+* Variations to support different artifact/zipball conventions:
+  * choosenim
+    * Single executable:
+      * choosenim_{os}_{arch} - raw binary
+      * choosenim_{os}_{arch}_debug - raw binary
+      * choosenim_windows_amd64.exe - raw binary
+      * choosenim_windows_amd64_debug.exe - raw binary
+      * choosenim_windows_amd64.zip
+        * Contains dlls - ask dom96 how is this generated?
+  * nimble
+    * source code only, zip & tar.gz
+  * nimterop
+    * source code only, zip & tar.gz
+* GitHub Actions:
+
+______________________
 
 Happy hacking!

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 # TODO - keep this or nah?
 export CHOOSENIM_NO_ANALYTICS=1
@@ -9,14 +9,10 @@ export CHOOSENIM_NO_ANALYTICS=1
 export RET_OK=0
 export RET_ERROR=1
 
-declare -a BINS
-BINS=()
-
 add_path () {
   # Add an entry to PATH
   export PATH="$1:$PATH"
   echo "::add-path::$1" # GitHub Actions syntax for adding to path across steps
-  echo "Added $1 to PATH"
 }
 
 normalize_to_host_cpu() {
@@ -28,17 +24,17 @@ normalize_to_host_cpu() {
   # * arm
   # * ppc64le
 
-  local cpu_arch=$(echo $1 | tr "[:upper:]" "[:lower:]")
+  local CPU=$(echo $1 | tr "[:upper:]" "[:lower:]")
 
-  case $cpu_arch in
-    *amd*64* | *x86*64* ) local cpu_arch="amd64" ;;
-    *x86* | *i*86* ) local cpu_arch="i386" ;;
-    *aarch64*|*arm64* ) local cpu_arch="arm64" ;;
-    *arm* ) local cpu_arch="arm" ;;
-    *ppc64le* ) local cpu_arch="powerpc64el" ;;
+  case $CPU in
+    *amd*64* | *x86*64* ) local CPU="amd64" ;;
+    *x86* | *i*86* ) local CPU="i386" ;;
+    *aarch64*|*arm64* ) local CPU="arm64" ;;
+    *arm* ) local CPU="arm" ;;
+    *ppc64le* ) local CPU="powerpc64el" ;;
   esac
 
-  echo $cpu_arch
+  echo $CPU
 }
 
 normalize_to_host_os () {
@@ -48,15 +44,15 @@ normalize_to_host_os () {
   # * macosx
   # * windows
 
-  local os_name=$(echo $1 | tr "[:upper:]" "[:lower:]")
+  local OS=$(echo $1 | tr "[:upper:]" "[:lower:]")
 
-  case $os_name in
-    *linux* | *ubuntu* | *alpine* ) local os_name="linux" ;;
-    *darwin* | *macos* | *osx* ) local os_name="macosx" ;;
-    *mingw* | *msys* | *windows* ) local os_name="windows" ;;
+  case $OS in
+    *linux* | *ubuntu* | *alpine* ) local OS="linux" ;;
+    *darwin* | *macos* | *osx* ) local OS="macosx" ;;
+    *mingw* | *msys* | *windows* ) local OS="windows" ;;
   esac
 
-  echo $os_name
+  echo $OS
 }
 
 download_nightly() {
@@ -215,7 +211,6 @@ install_nim_with_choosenim () {
   if ! type -P choosenim &> /dev/null
   then
     echo "Installing choosenim"
-
     mkdir -p $GITBIN
     if [[ "$HOST_OS" == "windows" ]]
     then
@@ -240,8 +235,8 @@ install_nim_with_choosenim () {
   else
     echo "choosenim already installed"
     rm -rf "${HOME}/.choosenim/current"
-    choosenim update $NIM_VERSION
-    choosenim $NIM_VERSION
+    choosenim update $NIM_VERSION --yes
+    choosenim $NIM_VERSION --yes
   fi
 }
 
@@ -249,34 +244,18 @@ detect_nim_project_type () {
   # Determine if project exports a binary executable or is a library
   cd "$NIM_PROJECT_DIR"
 
-  # Array of binaries this project installs, as defined in the nimble file
-  while IFS= read -r LINE
-  do
-    if [[ ! -z "$LINE" ]]
-    then
-      BINS+=("$LINE")
-    fi
-  done <<< $(echo "$(nimble dump \
-    | grep bin: \
-    | sed -e 's/bin: //g' \
-    | sed -e 's/"*//g')" \
-    | tr "," "\n")
+  export SRC_DIR=$(\
+    nimble dump \
+      | grep srcDir: \
+      | sed -e 's/srcDir: //g' \
+      | sed -e 's/"*//g')
 
-  export BIN_DIR=$(nimble dump \
-    | grep binDir: \
-    | sed -e 's/binDir: //g' \
-    | sed -e 's/"*//g')
-
-  export SRC_DIR=$(nimble dump \
-    | grep srcDir: \
-    | sed -e 's/srcDir: //g' \
-    | sed -e 's/"*//g')
-
-  if [[ "${#BINS[@]}" == "0" ]]
+  if [[ ! -z "$(nimble dump | grep '^bin: ""')" ]]
   then
     # nimble file does not specify bins, this is a library
     # See https://github.com/nim-lang/nimble#libraries
     export NIM_PROJECT_TYPE="library"
+    export BIN_DIR=""
   else
     if [[ -d "${SRC_DIR}/${NIM_PROJECT_NAME}pkg" ]]
     then
@@ -286,6 +265,13 @@ detect_nim_project_type () {
       # See https://github.com/nim-lang/nimble#binary-packages
       export NIM_PROJECT_TYPE="binary"
     fi
+
+    export BIN_DIR=$(\
+      nimble dump \
+        | grep 'binDir:' \
+        | sed -e 's/binDir: //g' \
+        | sed -e 's/"*//g')
+
     if [[ -z "$BIN_DIR" ]]
     then
       # If binDir isn't specified, nimble dumps bins into the project directory
@@ -319,48 +305,50 @@ install_nim_project () {
   cd -
 }
 
-make_zipball () {
-  # Export binaries and text files if NIM_PROJECT_TYPE is binary or hybrid, or
-  # if the user has placed anything in DIST_DIR. Otherwise, this is a no-op.
-  if [[ "$NIM_PROJECT_TYPE" == "binary" \
-        || "$NIM_PROJECT_TYPE" == "hybrid"
-        || ! -z "$(ls -A "${DIST_DIR}")" ]]
+make_bin_dist () {
+  # Handle the single bin case
+  for BIN in "${NIM_PROJECT_DIR}/bin/"*
+  do
+    local BIN_NAME=$(basename "$BIN")
+    local SUFFIX="-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${BIN_EXT}"
+    local BIN_DIST_NAME="$(echo "$BIN_NAME" | sed "s/${BIN_EXT}\$/$SUFFIX/")"
+    local BIN_DIST_PATH="${DIST_DIR}/${BIN_DIST_NAME}"
+    cp "$BIN" "$BIN_DIST_PATH"
+    echo "Made bin distribution $BIN_DIST_PATH"
+  done
+  # TODO - Better the multi-bin case - a zipball?
+}
+
+make_source_dist () {
+  if [[ "$HOST_OS" == "windows" ]]
   then
-    if [[ "${#BINS[@]}" -ge "1" \
-          && ! -f "${BIN_DIR}/${BINS[0]}${BIN_EXT}" ]]
-    then
-      # Project has unbuilt binaries, build them
-      install_nim_project
-    fi
-
-    cd "$DIST_DIR"
-
-    # Copy binaries to dist dir
-    for BIN in ${BINS[@]}
-    do
-      cp "${BIN_DIR}/${BIN}${BIN_EXT}" .
-    done
-
-    # Copy readme, license, etc
-    cp "${NIM_PROJECT_DIR}/"[Rr][Ee][Aa][Dd][Mm][Ee]* . &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"[Ll][Ii][Cc][Ee][Nn][Ss][Ee]* . &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"[Cc][Oo][Pp][Yy][Ii][Nn][Gg]* . &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"[Aa][Uu][Tt][Hh][Oo][Rr][Ss]* . &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"[Cc][Hh][Aa][Nn][Gg][Ee][Ll][Oo][Gg]* . &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"*.txt . &> /dev/null || true
-    cp "${NIM_PROJECT_DIR}/"*.md . &> /dev/null || true
-
-    if [[ "$ZIP_EXT" == ".zip" ]]
-    then
-      zip -r -q "${ZIP_PATH}" .
-    else
-      tar -c --lzma -f "${ZIP_PATH}" .
-    fi
-    cd -
-    echo "Made zipball $ZIP_PATH"
+    local FORMAT=".zip"
   else
-    echo "Nothing to arifact"
+    local FORMAT=".tar.gz"
   fi
+  local ARCHIVE="${DIST_DIR}/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}${FORMAT}"
+  cd "${NIM_PROJECT_DIR}"
+  git archive --output="${ARCHIVE}" HEAD .
+  cd -
+  echo "Made source distribution $ARCHIVE"
+}
+
+all_the_things () {
+  install_nim_project
+
+  cd "$NIM_PROJECT_DIR"
+  nimble test
+  cd -
+
+  if [[ "$NIM_PROJECT_TYPE" == "binary" || "$NIM_PROJECT_TYPE" == "hybrid" ]]
+  then
+    echo "$NIM_PROJECT_NAME is a $NIM_PROJECT_TYPE, making bin distribution"
+    make_bin_dist
+  else
+    echo "$NIM_PROJECT_NAME is a $NIM_PROJECT_TYPE, not making bin distribution"
+  fi
+  echo "Making source distribution"
+  make_source_dist
 }
 
 install_nim () {
@@ -406,27 +394,14 @@ init () {
 
   # Use Nim stable if NIM_VERSION not set.
   # An earlier version of this script used BRANCH as the env var name.
-  if [[ -z "$NIM_VERSION" ]]
-  then
-    if [[ -z "$BRANCH" ]]
-    then
-      export NIM_VERSION=stable
-    else
-      # fallback to old env var name BRANCH
-      export NIM_VERSION="$BRANCH"
-    fi
-  fi
-
-  if [[ -z "$CHOOSENIM_CHOOSE_VERSION" ]]
-  then
-    export CHOOSENIM_CHOOSE_VERSION="$NIM_VERSION"
-  fi
+  export NIM_VERSION=${NIM_VERSION:-${BRANCH:-"stable"}}
+  export CHOOSENIM_CHOOSE_VERSION=${CHOOSENIM_CHOOSE_VERSION:-$NIM_VERSION}
 
   export HOST_OS=$(normalize_to_host_os "$(uname)")
   export HOST_CPU=$(normalize_to_host_cpu "$(uname -m)")
 
   export BIN_EXT=""
-  export ZIP_EXT=".tar.xz"
+  # export ZIP_EXT=".tar.xz"
 
   case $HOST_OS in
     macosx)
@@ -435,13 +410,13 @@ init () {
       ;;
     windows)
       export BIN_EXT=.exe
-      export ZIP_EXT=.zip
+      # export ZIP_EXT=.zip
       ;;
   esac
 
   # Autodetect whether to use choosenim or build Nim from source, based on
   # architecture
-  if [[ -z "$USE_CHOOSENIM" ]]
+  if [[ -z "${USE_CHOOSENIM:-}" ]]
   then
     case "$HOST_CPU" in
       amd64) export USE_CHOOSENIM=yes ;;
@@ -457,48 +432,39 @@ init () {
   fi
 
   # Autodetect the location of the nim project if not explicitly provided.
-  if [[ -z "$NIM_PROJECT_DIR" ]]
+  if [[ -z "${NIM_PROJECT_DIR:-}" ]]
   then
-    local NIMBLE_FILE="$(find . -type f -name "*.nimble" -print \
-      | awk '{ print gsub(/\//, "/"), $0 \
-      | "sort -n" }' \
-      | head -n 1 \
-      | sed 's/^[0-9] //')"
-    if [[ ! -z "$NIMBLE_FILE" ]]
-    then
-      export NIM_PROJECT_DIR=$(dirname "$NIMBLE_FILE")
-    fi
-  fi
-
-  if [[ ! -d "$NIM_PROJECT_DIR" ]]
-  then
-    echo "Could not find directory containing .nimble file"
-    return $RET_ERROR
+    local NIMBLE_FILE=$(\
+      find . -type f -name "*.nimble" -print \
+        | awk '{ print gsub(/\//, "/"), $0 | "sort -n" }' \
+        | head -n 1 \
+        | sed 's/^[0-9] //')
+    export NIM_PROJECT_DIR=$(dirname "$NIMBLE_FILE")
+  else
+    local NIMBLE_FILE=$(\
+      find "${NIM_PROJECT_DIR}" -type f -name "*.nimble" -print \
+        | head -n 1)
   fi
 
   # Make NIM_PROJECT_DIR absolute
   export NIM_PROJECT_DIR=$(cd "$NIM_PROJECT_DIR"; pwd)
+  export NIM_PROJECT_NAME=$(basename "$NIMBLE_FILE" | sed -n 's/\(.*\)\.nimble$/\1/p')
 
-  export NIM_PROJECT_NAME=$(basename \
-    $(ls "${NIM_PROJECT_DIR}"/*.nimble \
-      | sed -n 's/\(.*\)\.nimble/\1/p'))
-
-  install_nim
+  # install_nim
 
   cd "$NIM_PROJECT_DIR"
-  export NIM_PROJECT_VERSION=$(nimble dump \
-    | grep version: \
-    | sed -e 's/version: //g' \
-    | sed -e 's/"*//g')
+  export NIM_PROJECT_VERSION=$(\
+    nimble dump \
+      | grep version: \
+      | sed -e 's/version: //g' \
+      | sed -e 's/"*//g')
   cd -
 
-  export DIST_DIR="${NIM_PROJECT_DIR}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}"
+  export DIST_DIR="${NIM_PROJECT_DIR}/dist"
   mkdir -p "$DIST_DIR"
-  export ZIP_PATH="${DIST_DIR}${ZIP_EXT}"
-
+  # export ZIP_PATH="${DIST_DIR}/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${ZIP_EXT}"
   detect_nim_project_type
-
-  if [[ ! -z "$GITHUB_WORKFLOW" ]]
+  if [[ ! -z "${GITHUB_WORKFLOW:-}" ]]
   then
     # Echoing ::set-output makes these variables available in subsequent
     # GitHub Actions steps via
@@ -513,7 +479,6 @@ init () {
   echo
   echo ">>> nim-ci config >>>"
   echo
-  echo "${DUMP_PREFIX}BINS::$(join_string_array ', ' $BINS)"
   echo "${DUMP_PREFIX}BIN_DIR::$BIN_DIR"
   echo "${DUMP_PREFIX}BIN_EXT::$BIN_EXT"
   echo "${DUMP_PREFIX}DIST_DIR::$DIST_DIR"
@@ -525,13 +490,9 @@ init () {
   echo "${DUMP_PREFIX}NIM_VERSION::$NIM_VERSION"
   echo "${DUMP_PREFIX}SRC_DIR::$SRC_DIR"
   echo "${DUMP_PREFIX}USE_CHOOSENIM::$USE_CHOOSENIM"
-  echo "${DUMP_PREFIX}ZIP_EXT::$ZIP_EXT"
-  echo "${DUMP_PREFIX}ZIP_PATH::$ZIP_PATH"
   echo
   echo "<<< nim-ci config <<<"
   echo
-
-  return $RET_OK
 }
 
 init
