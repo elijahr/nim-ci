@@ -450,7 +450,7 @@ init () {
   export NIM_PROJECT_DIR=$(cd "$NIM_PROJECT_DIR"; pwd)
   export NIM_PROJECT_NAME=$(basename "$NIMBLE_FILE" | sed -n 's/\(.*\)\.nimble$/\1/p')
 
-  # install_nim
+  install_nim
 
   cd "$NIM_PROJECT_DIR"
   export NIM_PROJECT_VERSION=$(\
