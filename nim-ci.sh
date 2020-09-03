@@ -101,6 +101,7 @@ download_nightly() {
     curl $NIGHTLY_DOWNLOAD_URL -SsLf -o $NIGHTLY_ARCHIVE
   else
     echo "No nightly build available for $HOST_OS $HOST_CPU"
+    local NIGHTLY_ARCHIVE=""
   fi
 
   local NIM_DIR="${HOME}/Nim-devel"
@@ -108,7 +109,7 @@ download_nightly() {
   then
     rm -Rf "$NIM_DIR"
     mkdir -p "$NIM_DIR"
-    if [[ "$ZIP_EXT" == ".zip" ]]
+    if [[ "$HOST_OS" == "windows" ]]
     then
       unzip -q "$NIGHTLY_ARCHIVE" -d "$NIM_DIR"
       local UNZIP_DIR=$(find "$NIM_DIR" -type d -name "nim-*" -print -quit \
@@ -165,7 +166,7 @@ install_nim_nightly_or_build_nim () {
     if [[ "$?" == "$RET_OK" ]]
     then
       # Nightly build was downloaded
-      return
+      return $RET_OK
     fi
     # Note: don't cache $HOME/Nim-devel between builds
     local NIMREPO=$HOME/Nim-devel
@@ -179,6 +180,7 @@ install_nim_nightly_or_build_nim () {
   if [[ -f "$NIMREPO/bin/nim" ]]
   then
     echo "Using cached Nim $NIMREPO"
+    return $RET_OK
   else
     echo "Building Nim $NIM_VERSION"
     if [[ "$NIM_VERSION" =~ [0-9] ]]
@@ -199,6 +201,7 @@ install_nim_nightly_or_build_nim () {
     sh build_all.sh
     # back to prev directory
     cd -
+    return $RET_OK
   fi
 }
 
@@ -234,10 +237,11 @@ install_nim_with_choosenim () {
     fi
   else
     echo "choosenim already installed"
-    rm -rf "${HOME}/.choosenim/current"
-    choosenim update $NIM_VERSION --yes
-    choosenim $NIM_VERSION --yes
   fi
+
+  rm -rf "${HOME}/.choosenim/current"
+  choosenim update $NIM_VERSION --yes
+  choosenim $NIM_VERSION --yes
 }
 
 detect_nim_project_type () {
@@ -395,13 +399,11 @@ init () {
   # Use Nim stable if NIM_VERSION not set.
   # An earlier version of this script used BRANCH as the env var name.
   export NIM_VERSION=${NIM_VERSION:-${BRANCH:-"stable"}}
-  export CHOOSENIM_CHOOSE_VERSION=${CHOOSENIM_CHOOSE_VERSION:-$NIM_VERSION}
 
   export HOST_OS=$(normalize_to_host_os "$(uname)")
   export HOST_CPU=$(normalize_to_host_cpu "$(uname -m)")
 
   export BIN_EXT=""
-  # export ZIP_EXT=".tar.xz"
 
   case $HOST_OS in
     macosx)
@@ -410,7 +412,6 @@ init () {
       ;;
     windows)
       export BIN_EXT=.exe
-      # export ZIP_EXT=.zip
       ;;
   esac
 
@@ -462,7 +463,6 @@ init () {
 
   export DIST_DIR="${NIM_PROJECT_DIR}/dist"
   mkdir -p "$DIST_DIR"
-  # export ZIP_PATH="${DIST_DIR}/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${ZIP_EXT}"
   detect_nim_project_type
   if [[ ! -z "${GITHUB_WORKFLOW:-}" ]]
   then
