@@ -11,7 +11,6 @@ jobs:
   build:
     name: Build ${{ matrix.nim_host_os }}_amd64
     runs-on: ${{ matrix.builder }}
-    fail-fast: false
 
     strategy:
       matrix:
