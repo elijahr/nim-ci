@@ -249,6 +249,14 @@ detect_nim_project_type () {
   # Determine if project exports a binary executable or is a library
   cd "$NIM_PROJECT_DIR"
 
+  local thenimble="$(which nimble || true)"
+  echo "which nimble is ${thenimble}"
+  if [[ -f "$thenimble" ]]
+  then
+    echo "$thenimble is a file"
+  else
+    echo "$thenimble is NOT a file"
+  fi
   export SRC_DIR=$(\
     nimble dump \
       | grep srcDir: \
