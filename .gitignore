@@ -1,5 +1,5 @@
 .vscode
 tests/**/bin
-tests/**/dist
+tests/**/artifacts
 tests/nimcitester/src/nimcitester
 .DS_Store

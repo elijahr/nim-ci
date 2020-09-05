@@ -197,8 +197,11 @@ install_nim_nightly_or_build_nim () {
       fi
     fi
     cd $NIMREPO
-    git clone -b $GITREF --single-branch https://github.com/nim-lang/Nim.git .
+    curl "https://api.github.com/repos/nim-lang/Nim/tarball/${GITREF}" -LsSf -o Nim.tar.gz
+    tar -xzf Nim.tar.gz -C .
+    cd nim-lang-Nim-*
     sh build_all.sh
+    cd -
     cd -
     return $RET_OK
   fi
@@ -315,32 +318,32 @@ install_nim_project () {
   cd -
 }
 
-make_bin_dist () {
+make_bin_artifacts () {
   # Handle the single bin case
   for BIN in "${NIM_PROJECT_DIR}/bin"/*
   do
     local BIN_NAME=$(basename "$BIN")
     local SUFFIX="-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${BIN_EXT}"
     local BIN_DIST_NAME="$(echo "$BIN_NAME" | sed "s/${BIN_EXT}\$/$SUFFIX/")"
-    local BIN_DIST_PATH="${DIST_DIR}/${BIN_DIST_NAME}"
+    local BIN_DIST_PATH="${ARTIFACTS_DIR}/${BIN_DIST_NAME}"
     cp "$BIN" "$BIN_DIST_PATH"
-    echo "Made bin distribution $BIN_DIST_PATH"
+    echo "Made bin artifact $BIN_DIST_PATH"
   done
   # TODO - Better the multi-bin case - a zipball?
 }
 
-make_source_dist () {
+make_source_artifact () {
   if [[ "$HOST_OS" == "windows" ]]
   then
-    local FORMAT=".zip"
+    local ZIP_EXT=".zip"
   else
-    local FORMAT=".tar.gz"
+    local ZIP_EXT=".tar.gz"
   fi
-  local ARCHIVE="${DIST_DIR}/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}${FORMAT}"
+  local ARCHIVE="${ARTIFACTS_DIR}/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}${ZIP_EXT}"
   cd "${NIM_PROJECT_DIR}"
   git archive --output="${ARCHIVE}" HEAD .
   cd -
-  echo "Made source distribution $ARCHIVE"
+  echo "Made source artifact $ARCHIVE"
 }
 
 all_the_things () {
@@ -352,13 +355,13 @@ all_the_things () {
 
   if [[ "$NIM_PROJECT_TYPE" == "binary" || "$NIM_PROJECT_TYPE" == "hybrid" ]]
   then
-    echo "$NIM_PROJECT_NAME is a $NIM_PROJECT_TYPE, making bin distribution"
-    make_bin_dist
+    echo "$NIM_PROJECT_NAME is a $NIM_PROJECT_TYPE, making bin artifact"
+    make_bin_artifacts
   else
-    echo "$NIM_PROJECT_NAME is a $NIM_PROJECT_TYPE, not making bin distribution"
+    echo "$NIM_PROJECT_NAME is a $NIM_PROJECT_TYPE, not making bin artifact"
   fi
-  echo "Making source distribution"
-  make_source_dist
+  echo "Making source artifact"
+  make_source_artifact
 }
 
 install_nim () {
@@ -478,8 +481,8 @@ init () {
       | sed -e 's/"*//g')
   cd -
 
-  export DIST_DIR="${NIM_PROJECT_DIR}/dist"
-  mkdir -p "$DIST_DIR"
+  export ARTIFACTS_DIR="${ARTIFACTS_DIR:-${NIM_PROJECT_DIR}/artifacts}"
+  mkdir -p "$ARTIFACTS_DIR"
   detect_nim_project_type
   if [[ ! -z "${GITHUB_WORKFLOW:-}" ]]
   then
@@ -498,7 +501,7 @@ init () {
   echo
   echo "${DUMP_PREFIX}BIN_DIR::$BIN_DIR"
   echo "${DUMP_PREFIX}BIN_EXT::$BIN_EXT"
-  echo "${DUMP_PREFIX}DIST_DIR::$DIST_DIR"
+  echo "${DUMP_PREFIX}ARTIFACTS_DIR::$ARTIFACTS_DIR"
   echo "${DUMP_PREFIX}HOST_CPU::$HOST_CPU"
   echo "${DUMP_PREFIX}HOST_OS::$HOST_OS"
   echo "${DUMP_PREFIX}NIM_PROJECT_DIR::$NIM_PROJECT_DIR"

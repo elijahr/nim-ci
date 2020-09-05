@@ -1,5 +1,5 @@
 os: linux
-dist: bionic
+artifacts: bionic
 language: c
 
 matrix:
@@ -40,7 +40,8 @@ matrix:
 
 cache:
   directories:
-    - "$HOME/.choosenim" # cache nim binaries
+    - "$HOME/.choosenim"
+    - "$HOME/.nimble"
 
 install:
   - |

@@ -18,8 +18,6 @@ proc repoDir(): string = (".."/".."/"..").absolutePath
 
 proc nimci(): string = "bash -c 'source " & repoDir()/"nim-ci.sh'"
 
-proc distName(pkg: string): string = pkg & "-0.1.0-" & hostOS & "_" & hostCPU
-
 proc projectDir(pkg: string): string =
   result =
     if pkg == "nimcitester": "..".absolutePath
@@ -31,13 +29,14 @@ proc projectType(pkg: string): string =
     elif pkg == "nimcilibrary": "library"
     else: "binary"
 
-proc distDir(pkg: string): string = projectDir(pkg)/"dist"
+proc artifactsDir(pkg: string): string = projectDir(pkg)/"artifacts"
 
 proc binDir(pkg: string): string =
   if projectType(pkg) in ["binary", "hybrid"]: projectDir(pkg)/"bin"
   else: ""
 
-proc binDist(pkg: string, bin: string): string = distDir(pkg)/bin & "-0.1.0-" & hostOS & "_" & hostCPU
+proc binArtifact(pkg: string, bin: string): string =
+  artifactsDir(pkg)/bin & "-0.1.0-" & hostOS & "_" & hostCPU
 
 const useChoosenim =
   when hostCPU == "amd64": "yes"
@@ -80,7 +79,7 @@ const config = """
 
 $1BIN_DIR::$2
 $1BIN_EXT::$3
-$1DIST_DIR::$4
+$1ARTIFACTS_DIR::$4
 $1HOST_CPU::$5
 $1HOST_OS::$6
 $1NIM_PROJECT_DIR::$7
@@ -100,7 +99,7 @@ suite "nim-ci.sh init":
     let (output, exitCode) = exec(nimci())
     check exitCode == 0
     let expected = config % [
-      "", binDir(pkg), binExt, distDir(pkg), hostCPU, hostOS,
+      "", binDir(pkg), binExt, artifactsDir(pkg), hostCPU, hostOS,
       projectDir(pkg), pkg, projectType(pkg), "stable", useChoosenim
     ]
     check expected in output
@@ -115,7 +114,7 @@ suite "nim-ci.sh init":
     let (output, exitCode) = exec(nimci(), env=env)
     check exitCode == 0
     let expected = config % [
-      "::set-output name=", binDir(pkg), binExt, distDir(pkg),
+      "::set-output name=", binDir(pkg), binExt, artifactsDir(pkg),
       hostCPU, hostOS, projectDir(pkg), pkg, projectType(pkg), "stable",
       useChoosenim,
     ]
@@ -133,7 +132,7 @@ suite "nim-ci.sh init":
       let (output, exitCode) = exec(nimci(), env=env)
       check exitCode == 0
       let expected = config % [
-        "", binDir(pkg), binExt, distDir(pkg), hostCPU, hostOS,
+        "", binDir(pkg), binExt, artifactsDir(pkg), hostCPU, hostOS,
         projectDir(pkg), pkg, projectType(pkg), "devel", "no",
       ]
       check expected in output
@@ -146,10 +145,10 @@ suite "binary/hybrid":
         check exitCode == 0
         check output.strip == pkg & $i
 
-  test "binaries were built and placed in dist directory by make_bin_dist":
+  test "binaries were built and placed in artifacts directory by make_bin_artifacts":
     for pkg in ["nimcibinary", "nimcihybrid"]:
       for i in 1..2:
-        let (output, exitCode) = exec(binDist(pkg, pkg & $i))
+        let (output, exitCode) = exec(binArtifact(pkg, pkg & $i))
         check exitCode == 0
         check output.strip == pkg & $i
 

@@ -120,9 +120,9 @@ The `binDir` value from the .nimble file.
 
 `.exe` on Windows, empty otherwise.
 
-#### `DIST_DIR`
+#### `ARTIFACTS_DIR`
 
-The interpolated value of `${NIM_PROJECT_DIR}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}`, for example `/home/travis/foo/dist/foo-0.1.0-linux_arm64`. Any files placed in this directory will be included in the zipball produced by `make_zipball`.
+The interpolated value of `${NIM_PROJECT_DIR}/artifacts/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}`, for example `/home/travis/foo/artifacts/foo-0.1.0-linux_arm64`. Any files placed in this directory will be included in the zipball produced by `make_zipball`.
 
 #### `HOST_CPU`
 
@@ -154,7 +154,7 @@ The `srcDir` value from the .nimble file.
 
 #### `ZIP_PATH`
 
-The absolute path to the zipball created by calling `make_zipball`. This will be the interpolated value of `${NIM_PROJECT_DIR}/dist/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${ZIP_EXT}`, for example `/home/travis/foo/dist/foo-0.1.0-linux_arm64.tar.xz`.
+The absolute path to the zipball created by calling `make_zipball`. This will be the interpolated value of `${NIM_PROJECT_DIR}/artifacts/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}-${HOST_OS}_${HOST_CPU}${ZIP_EXT}`, for example `/home/travis/foo/artifacts/foo-0.1.0-linux_arm64.tar.xz`.
 
 ### Functions
 
@@ -166,7 +166,7 @@ Add an entry to `PATH` in a cross-CI-platform way. For instance, GitHub Actions 
 
 #### `all_the_things`
 
-Install your project, run its tests, and build distribution packages.
+Install your project, run its tests, and build artifacts.
 
 #### `install_nim_project`
 
@@ -182,7 +182,7 @@ If the project defines a `make_packages` task in its .nimble file, `nimble make_
 
 #### `make_zipball`
 
-If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will copy the project's binaries to `DIST_DIR` and create a zipball from `DIST_DIR` at `ZIP_PATH`. If `NIM_PROJECT_DIR` contains `README*`, `LICENSE*`, `AUTHORS*`, `COPYING*`, `*.txt` or `*.md` files, those will also be included in the zipball. If `NIM_PROJECT_TYPE` is `library`, `make_zipball` is a no-op, unless you have explicitly placed items in `DIST_DIR`, in which case a zipball is created. If the project has not been built yet, `make_zipball` will call `install_nim_project` first to build your project's binaries.
+If `NIM_PROJECT_TYPE` is `binary` or `hybrid`, this will copy the project's binaries to `ARTIFACTS_DIR` and create a zipball from `ARTIFACTS_DIR` at `ZIP_PATH`. If `NIM_PROJECT_DIR` contains `README*`, `LICENSE*`, `AUTHORS*`, `COPYING*`, `*.txt` or `*.md` files, those will also be included in the zipball. If `NIM_PROJECT_TYPE` is `library`, `make_zipball` is a no-op, unless you have explicitly placed items in `ARTIFACTS_DIR`, in which case a zipball is created. If the project has not been built yet, `make_zipball` will call `install_nim_project` first to build your project's binaries.
 
 #### `normalize_to_host_cpu <cpu>`
 

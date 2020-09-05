@@ -43,11 +43,11 @@ before install:
         discard
       exec "bash -c \"source " & nimcish & "; all_the_things\""
 
-task clean, "Removes all bin and dist directories":
+task clean, "Removes all bin and artifacts directories":
   for pkg in [".", "nimcibinary", "nimcihybrid", "nimcilibrary"]:
     withDir pkg:
       rmDir("bin")
-      rmDir("dist")
+      rmDir("artifacts")
 
 task test, "Runs the test suite":
   withDir "src":
