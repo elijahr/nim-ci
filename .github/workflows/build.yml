@@ -89,10 +89,10 @@ jobs:
       - uses: actions/checkout@v2.1.0
 
       # Use run-on-arch-action to emulate the CPU architecture.
-      # See https://github.com/elijahr/run-on-arch-action for docs.
+      # See https://github.com/uraimo/run-on-arch-action for docs.
       - name: Build
         id: build
-        uses: elijahr/run-on-arch-action@v2.0.0
+        uses: uraimo/run-on-arch-action@v2.0.0
         with:
           arch: ${{ matrix.arch }}
           distro: ubuntu18.04
