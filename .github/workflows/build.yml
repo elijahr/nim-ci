@@ -92,15 +92,15 @@ jobs:
       # See https://github.com/uraimo/run-on-arch-action for docs.
       - name: Build
         id: build
-        uses: elijahr/run-on-arch-action@fix-container-name-collision
+        uses: uraimo/run-on-arch-action@v2.0.1
         with:
           arch: ${{ matrix.arch }}
           distro: ubuntu18.04
 
           githubToken: ${{ github.token }}
 
-          # Put env vars shared across all matrices here
-          env: | # Pipe is important
+          # Put env vars shared across all matrix nodes here
+          env: | # YAML, but `|` is necessary
             NIM_VERSION: ${{ matrix.nim_version }}
             NIM_CI_VERSION: github-workflows
 

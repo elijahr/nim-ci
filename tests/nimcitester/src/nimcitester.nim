@@ -75,11 +75,10 @@ proc exec(
 
 
 const config = """
->>> nim-ci config >>>
 
-$1BIN_DIR::$2
-$1BIN_EXT::$3
-$1ARTIFACTS_DIR::$4
+$1ARTIFACTS_DIR::$2
+$1BIN_DIR::$3
+$1BIN_EXT::$4
 $1HOST_CPU::$5
 $1HOST_OS::$6
 $1NIM_PROJECT_DIR::$7
@@ -89,7 +88,6 @@ $1NIM_VERSION::$10
 $1SRC_DIR::src
 $1USE_CHOOSENIM::$11
 
-<<< nim-ci config <<<
 """.strip
 
 
@@ -99,7 +97,7 @@ suite "nim-ci.sh init":
     let (output, exitCode) = exec(nimci())
     check exitCode == 0
     let expected = config % [
-      "", binDir(pkg), binExt, artifactsDir(pkg), hostCPU, hostOS,
+      "", artifactsDir(pkg), binDir(pkg), binExt, hostCPU, hostOS,
       projectDir(pkg), pkg, projectType(pkg), "stable", useChoosenim
     ]
     check expected in output
@@ -114,7 +112,7 @@ suite "nim-ci.sh init":
     let (output, exitCode) = exec(nimci(), env=env)
     check exitCode == 0
     let expected = config % [
-      "::set-output name=", binDir(pkg), binExt, artifactsDir(pkg),
+      "::set-output name=", artifactsDir(pkg), binDir(pkg), binExt,
       hostCPU, hostOS, projectDir(pkg), pkg, projectType(pkg), "stable",
       useChoosenim,
     ]
@@ -132,7 +130,7 @@ suite "nim-ci.sh init":
       let (output, exitCode) = exec(nimci(), env=env)
       check exitCode == 0
       let expected = config % [
-        "", binDir(pkg), binExt, artifactsDir(pkg), hostCPU, hostOS,
+        "", artifactsDir(pkg), binDir(pkg), binExt, hostCPU, hostOS,
         projectDir(pkg), pkg, projectType(pkg), "devel", "no",
       ]
       check expected in output

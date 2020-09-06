@@ -484,35 +484,34 @@ init () {
   export ARTIFACTS_DIR="${ARTIFACTS_DIR:-${NIM_PROJECT_DIR}/artifacts}"
   mkdir -p "$ARTIFACTS_DIR"
   detect_nim_project_type
+
+  # Dump config for debugging.
+  VARNAMES=(
+    "ARTIFACTS_DIR" "BIN_DIR" "BIN_EXT" "HOST_CPU" "HOST_OS" "NIM_PROJECT_DIR" \
+    "NIM_PROJECT_NAME" "NIM_PROJECT_TYPE" "NIM_VERSION" "SRC_DIR" \
+    "USE_CHOOSENIM" )
+  echo
+  echo ">>> nim-ci config >>>"
+  echo
+  for VARNAME in "${VARNAMES[@]}"
+  do
+    eval echo "${VARNAME}::$(echo '$VARNAME')"
+  done
+  echo
+  echo "<<< nim-ci config <<<"
+  echo
+
   if [[ ! -z "${GITHUB_WORKFLOW:-}" ]]
   then
     # Echoing ::set-output makes these variables available in subsequent
     # GitHub Actions steps via
-    # ${{ steps.<step-id>.outputs.FOO }}
+    # ${{ steps.<step-id>.outputs.VARNAME }}
     # where <step-id> is the YAML id: for the  step that ran this script.
-    local DUMP_PREFIX="::set-output name="
-  else
-    local DUMP_PREFIX=""
+    for VARNAME in "${VARNAMES[@]}"
+    do
+      eval echo "::set-output name=${VARNAME}::$(echo '$VARNAME')"
+    done
   fi
-
-  # Dump config for debugging.
-  echo
-  echo ">>> nim-ci config >>>"
-  echo
-  echo "${DUMP_PREFIX}BIN_DIR::$BIN_DIR"
-  echo "${DUMP_PREFIX}BIN_EXT::$BIN_EXT"
-  echo "${DUMP_PREFIX}ARTIFACTS_DIR::$ARTIFACTS_DIR"
-  echo "${DUMP_PREFIX}HOST_CPU::$HOST_CPU"
-  echo "${DUMP_PREFIX}HOST_OS::$HOST_OS"
-  echo "${DUMP_PREFIX}NIM_PROJECT_DIR::$NIM_PROJECT_DIR"
-  echo "${DUMP_PREFIX}NIM_PROJECT_NAME::$NIM_PROJECT_NAME"
-  echo "${DUMP_PREFIX}NIM_PROJECT_TYPE::$NIM_PROJECT_TYPE"
-  echo "${DUMP_PREFIX}NIM_VERSION::$NIM_VERSION"
-  echo "${DUMP_PREFIX}SRC_DIR::$SRC_DIR"
-  echo "${DUMP_PREFIX}USE_CHOOSENIM::$USE_CHOOSENIM"
-  echo
-  echo "<<< nim-ci config <<<"
-  echo
 }
 
 init
