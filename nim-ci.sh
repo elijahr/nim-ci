@@ -276,6 +276,9 @@ install_nim_with_choosenim () {
     echo "choosenim already installed"
   fi
 
+  mkdir -p "${CHOOSENIM_DIR}"
+  mkdir -p "${NIMBLE_DIR}"
+
   # rm -rf "${CHOOSENIM_DIR}/current"
   choosenim update $NIM_VERSION \
     --yes --choosenimDir:"${CHOOSENIM_DIR}" --nimbleDir:"${NIMBLE_DIR}"
@@ -298,7 +301,7 @@ collect_project_metadata () {
   fi
 
   cd "$NIM_PROJECT_DIR"
-  
+
   # Make absolute
   export NIM_PROJECT_DIR=$(pwd)
 
