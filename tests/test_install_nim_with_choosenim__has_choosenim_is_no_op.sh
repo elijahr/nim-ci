@@ -24,6 +24,7 @@ trap cleanup EXIT
 # Mock choosenim
 mkdir -p "${NIMBLE_DIR}/bin"
 echo "#!/bin/bash" > "${NIMBLE_DIR}/bin/choosenim"
+chmod +x "${NIMBLE_DIR}/bin/choosenim"
 
 install_nim_with_choosenim
 
