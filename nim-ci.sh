@@ -265,12 +265,20 @@ install_nim_with_choosenim () {
     curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/choosenim-init.sh -sSf -o choosenim-init.sh
     sh choosenim-init.sh -y
     rm choosenim-init.sh
-    cp "${NIMBLE_DIR}/bin/choosenim$BIN_EXT" "${GITBIN}/"
 
-    # Copy DLLs for choosenim
+    # Copy GITBIN contents
     if [[ "$HOST_OS" == "windows" ]]
     then
-      cp "${NIMBLE_DIR}/bin"/*.dll "${GITBIN}/"
+      local GITBIN="${HOME}/.cache/nim-ci/git/bin"
+      mkdir -p "${GITBIN}"
+      for ITEM in "${GITBIN}"/*.exe
+      do
+        cp "$ITEM" "${NIMBLE_DIR}/"
+      done
+      for ITEM in "${GITBIN}"/*.dll
+      do
+        cp "$ITEM" "${NIMBLE_DIR}/"
+      done
     fi
     echo "Installed choosenim"
   else
