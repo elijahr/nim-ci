@@ -14,10 +14,11 @@ RET_SKIP=2
 ASSERT_STATUS=0
 
 TMP_DIR="$(mktemp -d -t nim-ci-XXXXXXX)"
-# TMP_DIR="${HOME}/Desktop/nim-ci-test"
 CHOOSENIM_DIR="${TMP_DIR}/choosenim"
 NIMBLE_DIR="${TMP_DIR}/nimble"
 PATH="${NIMBLE_DIR}/bin:$PATH"
+
+CHOOSENIM_ARGS="--choosenimDir:\"${CHOOSENIM_DIR}\" --nimbleDir:\"${NIMBLE_DIR}\""
 
 # Default to using nightly builds for faster test runs
 NIM_VERSION=devel

@@ -261,16 +261,17 @@ install_nim_with_choosenim () {
       install_windows_git
     fi
 
-    curl https://nim-lang.org/choosenim/init.sh -sSf -o choosenim-init.sh
+    # curl https://nim-lang.org/choosenim/init.sh -sSf -o choosenim-init.sh
+    curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/choosenim-init.sh -sSf -o choosenim-init.sh
     sh choosenim-init.sh -y
     rm choosenim-init.sh
-    # cp "${NIMBLE_DIR}/bin/choosenim$BIN_EXT" "${GITBIN}/"
+    cp "${NIMBLE_DIR}/bin/choosenim$BIN_EXT" "${GITBIN}/"
 
-    # # Copy DLLs for choosenim
-    # if [[ "$HOST_OS" == "windows" ]]
-    # then
-    #   cp "${NIMBLE_DIR}/bin"/*.dll "${GITBIN}/"
-    # fi
+    # Copy DLLs for choosenim
+    if [[ "$HOST_OS" == "windows" ]]
+    then
+      cp "${NIMBLE_DIR}/bin"/*.dll "${GITBIN}/"
+    fi
     echo "Installed choosenim"
   else
     echo "choosenim already installed"
@@ -289,10 +290,8 @@ install_nim_with_choosenim () {
   fi
 
   # rm -rf "${CHOOSENIM_DIR}/current"
-  choosenim update $NIM_VERSION \
-    --yes --choosenimDir:"${CHOOSENIM_DIR}" --nimbleDir:"${NIMBLE_DIR}"
-  choosenim $NIM_VERSION \
-    --yes --choosenimDir:"${CHOOSENIM_DIR}" --nimbleDir:"${NIMBLE_DIR}"
+  choosenim update $NIM_VERSION --yes ${CHOOSENIM_ARGS:-}
+  choosenim $NIM_VERSION --yes ${CHOOSENIM_ARGS:-}
 }
 
 collect_project_metadata () {
