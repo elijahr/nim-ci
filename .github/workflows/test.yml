@@ -57,5 +57,17 @@ jobs:
           env: |
             GITHUB_TOKEN: ${{ github.token }}
             NIM_CI_TEST_FULL_CLEAN: yes
+          dockerRunArgs: |
+            -v ".:/volume1"
+            -v ".:/volume2"
+            "-v .:/volume3"
+            -v ".":"/volume4"
+            "-v" ".":"/volume5"
+            -v '.:/volume1'
+            -v '.:/volume2'
+            '-v .:/volume3'
+            -v '.':'/volume4'
+            '-v' '.':'/volume5'
           run: |
+            apt-get install git -y
             bash ./tests/run.sh
