@@ -285,7 +285,7 @@ install_nim_with_choosenim () {
   then
     # If a custom NIMBLE_DIR was provided choosenim won't have installed there,
     # so update PATH to include choosenim.
-    add_path "${HOME}/.nimble"
+    add_path "${HOME}/.nimble/bin"
   fi
 
   # rm -rf "${CHOOSENIM_DIR}/current"
