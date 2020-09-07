@@ -264,7 +264,6 @@ install_nim_with_choosenim () {
     curl https://nim-lang.org/choosenim/init.sh -sSf -o choosenim-init.sh
     sh choosenim-init.sh -y
     rm choosenim-init.sh
-    add_path "${NIMBLE_DIR}/bin"
     # cp "${NIMBLE_DIR}/bin/choosenim$BIN_EXT" "${GITBIN}/"
 
     # # Copy DLLs for choosenim
@@ -276,6 +275,8 @@ install_nim_with_choosenim () {
   else
     echo "choosenim already installed"
   fi
+  add_path "${NIMBLE_DIR}/bin"
+  add_path "${CHOOSENIM_DIR}/bin"
 
   mkdir -p "${CHOOSENIM_DIR}"
   mkdir -p "${NIMBLE_DIR}"
