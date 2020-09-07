@@ -92,7 +92,7 @@ jobs:
       # See https://github.com/uraimo/run-on-arch-action for docs.
       - name: Build
         id: build
-        uses: uraimo/run-on-arch-action@v2.0.1
+        uses: elijahr/run-on-arch-action@fix-args
         with:
           arch: ${{ matrix.arch }}
           distro: ubuntu18.04
