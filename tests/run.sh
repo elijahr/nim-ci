@@ -24,8 +24,7 @@ trap on_cancel INT
 
 for TEST in test_*.sh
 do
-  RUN_TXT="[.......] $TEST"
-  printf "$RUN_TXT"
+  echo "[RUNNING] $TEST"
   if [[ "$CANCELLED" == "no" ]]
   then
     echo >> /tmp/nim-ci-test-log.txt
@@ -47,8 +46,7 @@ do
     STATUS="${RED}[CANCELLED]${NC}"
     FAILED=yes
   fi
-  printf '\r%.0s' {1..${#RUN_TXT}}
-  echo -e "$STATUS $TEST"
+  echo -e "$STATUS ${TEST}"
 done
 
 if [[ "$FAILED" == "yes" ]]
