@@ -44,7 +44,7 @@ install() {
   say "Downloading $filename"
   curl -sSfL "$url" -o "$temp_prefix/$filename" || unsupported $platform
   chmod +x "$temp_prefix/$filename"
-  if [ "$platform" =~ *"windows"* ]; then
+  if [[ "$platform" =~ *"windows"* ]]; then
     # Extract ZIP for Windows
     unzip -j -o -d $temp_prefix/choosenim $temp_prefix/$filename
     local filename="choosenim/choosenim.exe"
