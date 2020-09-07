@@ -15,14 +15,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - nim_host_os: linux # Match nim's system.hostOS values
-            builder: ubuntu-latest
+          - builder: ubuntu-18.04
             nim_version: devel
-          - nim_host_os: macosx # Match nim's system.hostOS values
-            builder: macos-latest
+          - builder: macos-latest
             nim_version: devel
-          - nim_host_os: windows # Match nim's system.hostOS values
-            builder: windows-latest
+          - builder: windows-latest
             nim_version: devel
 
     steps:
@@ -36,9 +33,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            ~/.choosenim
-            ~/.nimble
-          key: build-${{ runner.os }}
+            ~/.choosenim_${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
+            ~/.nimble_${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
 
       - name: Install & build
         id: build
@@ -48,43 +44,39 @@ jobs:
           NIM_CI_VERSION: github-workflows # or vX.Y.Z to lock to a specific nim-ci version
         shell: bash
         run: |
+          ln -s ~/.choosenim_${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64 ~/.choosenim
+          ln -s ~/.nimble_${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64 ~/.nimble
+
           curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
           source nim-ci.sh
 
           all_the_things
 
-      - name: Upload packages
+      - name: Upload artifacts
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v2
         with:
-          path: ${{ steps.build.outputs.ZIP_PATH }}
+          path: ./artifacts/*
 
   # Build for Linux aarch64, ppc64le, etc
   build_linux_other_archs:
-    name: Build ${{ matrix.nim_host_os }}_${{ matrix.nim_host_cpu }}
+    name: Build linux_${{ matrix.nim_host_cpu }}
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         include:
-          - nim_host_os: linux # Match nim's system.hostCPU values
-            nim_host_cpu: arm64 # Match nim's system.hostOS values
-            nim_version: stable # The version of Nim to test with
+          - nim_version: stable # The version of Nim to test with
             arch: aarch64 # For run-on-arch-action
-
-          # - nim_host_os: linux
-          #   nim_host_cpu: powerpc64el
-          #   arch: ppc64le
-          #   nim_version: stable
 
     steps:
       - name: Setup cache
         uses: actions/cache@v2
         with:
           path: |
-            ~/.choosenim-linux_${{ matrix.arch }}
-            ~/.nimble-linux_${{ matrix.arch }}
-          key: build_other_archs_linux_${{ matrix.arch }}
+            ~/.choosenim-ubuntu-18.04-${{ matrix.arch }}
+            ~/.nimble-ubuntu-18.04-${{ matrix.arch }}
+          key: ${{ matrix.nim_version }}_linux_${{ matrix.arch }}
 
       - uses: actions/checkout@v2.1.0
 
@@ -106,13 +98,15 @@ jobs:
 
           # Create cached directories
           setup: |
-            mkdir -p ~/.choosenim-${{ matrix.arch }}
-            mkdir -p ~/.nimble-${{ matrix.arch }}
+            mkdir -p ~/.choosenim-ubuntu-18.04-${{ matrix.arch }}
+            mkdir -p ~/.nimble-ubuntu-18.04-${{ matrix.arch }}
+            mkdir -p ./artifacts
 
           # Mount cached directories in the container for faster builds
           dockerRunArgs: |
-            -v /home/runner/.choosenim-linux_${{ matrix.arch }}:/root/.choosenim
-            -v /home/runner/.nimble-linux_${{ matrix.arch }}:/root/.nimble
+            --volume ~/.choosenim-ubuntu-18.04-${{ matrix.arch }}:/root/.choosenim
+            --volume ~/.nimble-ubuntu-18.04-${{ matrix.arch }}:/root/.nimble
+            --volume ./artifacts:/artifacts
 
           run: |
             apt-get update -q
@@ -123,8 +117,8 @@ jobs:
 
             all_the_things
 
-      # - name: Upload zipball
-      #   if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     path: ${{ steps.build.outputs.ZIP_PATH }}
+      - name: Upload artifacts
+        if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./artifacts/*

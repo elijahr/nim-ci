@@ -16,16 +16,6 @@ add_path () {
   fi
 }
 
-if ! type -p realpath &> /dev/null
-then
-  realpath () {
-    # Polyfill for realpath
-    cd "$BIN_DIR"
-    pwd
-    cd - &>/dev/null
-  }
-fi
-
 normalize_to_host_cpu() {
   # Normalize a CPU architecture string to match Nim's system.hostCPU values.
   # The echo'd value is one of:
@@ -307,9 +297,10 @@ collect_project_metadata () {
     local NIMBLE_FILE=$(find_nimble_file "$NIM_PROJECT_DIR")
   fi
 
-  # Make absolute
-  export NIM_PROJECT_DIR=$(realpath "$NIM_PROJECT_DIR")
   cd "$NIM_PROJECT_DIR"
+  
+  # Make absolute
+  export NIM_PROJECT_DIR=$(pwd)
 
   export NIM_PROJECT_NAME=$(basename "$NIMBLE_FILE" | sed -n 's/\(.*\)\.nimble$/\1/p')
 
