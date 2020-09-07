@@ -44,11 +44,13 @@ install() {
   say "Downloading $filename"
   curl -sSfL "$url" -o "$temp_prefix/$filename" || unsupported $platform
   chmod +x "$temp_prefix/$filename"
-  if [[ "$platform" =~ ^windows_.* ]]; then
-    # Extract ZIP for Windows
-    unzip -j -o -d $temp_prefix/choosenim $temp_prefix/$filename
-    local filename="choosenim/choosenim.exe"
-  fi
+  case $platform in
+    windows*)
+      # Extract ZIP for Windows
+      unzip -j -o -d $temp_prefix/choosenim $temp_prefix/$filename
+      local filename="choosenim/choosenim.exe"
+      ;;
+  esac
 
   if [ "$need_tty" = "yes" ]; then
     # The installer is going to want to ask for confirmation by
