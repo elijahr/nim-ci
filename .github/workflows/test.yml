@@ -9,7 +9,7 @@ on:
 
 jobs:
   test_amd64:
-    name: Test ${{ matrix.builder }} amd64
+    name: Test ${{ matrix.builder }} x86_64
     runs-on: ${{ matrix.builder }}
 
     strategy:
