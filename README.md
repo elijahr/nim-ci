@@ -28,7 +28,7 @@ This script is used by various tools like [nimble](https://github.com/nim-lang/n
 Run this in your repository:
 
 ```sh
-curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/devel/install_github.sh | sh
+curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/devel/install-github.sh | sh
 git add .github
 git commit -m "Add GitHub Actions"
 git push
@@ -39,7 +39,7 @@ git push
 Run this in your repository:
 
 ```sh
-curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/devel/install_travis.sh | sh
+curl -LsSf https://raw.githubusercontent.com/elijahr/nim-ci/devel/install-travis.sh | sh
 git add .travis.yml
 git commit -m "Add Travis CI"
 git push

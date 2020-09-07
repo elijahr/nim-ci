@@ -1,0 +1,59 @@
+name: Test
+
+on:
+  push:
+    branches: [ '*' ]
+    tags: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+jobs:
+  test_amd64:
+    name: Test ${{ matrix.builder }} amd64
+    runs-on: ${{ matrix.builder }}
+
+    strategy:
+      matrix:
+        include:
+          - builder: ubuntu-18.04
+          - builder: macos-latest
+          - builder: windows-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      - name: Run tests
+        id: test
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NIM_CI_TEST_FULL_CLEAN: yes
+        run: ./tests/run.sh
+
+  # Build for Linux aarch64, ppc64le, etc
+  test_linux_other_archs:
+    name: Test ubuntu-18.04 ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+          - arch: powerpc64el
+
+    steps:
+      - uses: actions/checkout@v2.1.0
+      - name: Run tests
+        id: test
+        uses: uraimo/run-on-arch-action@v2.0.1
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ubuntu18.04
+          githubToken: ${{ github.token }}
+          env: |
+            GITHUB_TOKEN: ${{ github.token }}
+            NIM_CI_TEST_FULL_CLEAN: yes
+          run: ./tests/run.sh

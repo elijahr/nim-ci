@@ -1,10 +1,6 @@
 #!/bin/bash
 
 set -euo pipefail
-# set -u
-
-# TODO - keep this or nah?
-export CHOOSENIM_NO_ANALYTICS=1
 
 # return codes
 export RET_OK=0
@@ -13,8 +9,22 @@ export RET_ERROR=1
 add_path () {
   # Add an entry to PATH
   export PATH="$1:$PATH"
-  echo "::add-path::$1" # GitHub Actions syntax for adding to path across steps
+  if [[ ! -z "${GITHUB_WORKFLOW:-}" ]]
+  then
+    # GitHub Actions syntax for adding to path across steps
+    echo "::add-path::$1"
+  fi
 }
+
+if ! type -p realpath &> /dev/null
+then
+  realpath () {
+    # Polyfill for realpath
+    cd "$BIN_DIR"
+    pwd
+    cd - &>/dev/null
+  }
+fi
 
 normalize_to_host_cpu() {
   # Normalize a CPU architecture string to match Nim's system.hostCPU values.
@@ -28,11 +38,11 @@ normalize_to_host_cpu() {
   local CPU=$(echo $1 | tr "[:upper:]" "[:lower:]")
 
   case $CPU in
-    *amd*64* | *x86*64* ) local CPU="amd64" ;;
-    *x86* | *i*86* ) local CPU="i386" ;;
+    *amd*64* | *x86*64* | x64 ) local CPU="amd64" ;;
+    *x86* | *i*86* | x32 ) local CPU="i386" ;;
     *aarch64*|*arm64* ) local CPU="arm64" ;;
     *arm* ) local CPU="arm" ;;
-    *ppc64le* ) local CPU="powerpc64el" ;;
+    *ppc64le* | powerpc64el ) local CPU="powerpc64el" ;;
   esac
 
   echo $CPU
@@ -48,12 +58,22 @@ normalize_to_host_os () {
   local OS=$(echo $1 | tr "[:upper:]" "[:lower:]")
 
   case $OS in
-    *linux* | *ubuntu* | *alpine* ) local OS="linux" ;;
-    *darwin* | *macos* | *osx* ) local OS="macosx" ;;
+    *linux* | *ubuntu* | *alpine* | *debian* | *jessie* | *buster* \
+    | *stretch* | *arch* | *gentoo* | *fedora* | *manjaro* )
+      local OS="linux" ;;
+    *darwin* | *macos* | *osx* | *macosx* ) local OS="macosx" ;;
     *mingw* | *msys* | *windows* ) local OS="windows" ;;
   esac
 
   echo $OS
+}
+
+github_api_curl_args () {
+  if [[ ! -z "${GITHUB_TOKEN:-}" ]]
+  then
+    # Set GITHUB_TOKEN env var to avoid rate-limiting
+    echo "-Hauthorization: Bearer ${GITHUB_TOKEN}"
+  fi
 }
 
 download_nightly() {
@@ -87,9 +107,8 @@ download_nightly() {
   then
     # Fetch nightly download url. This is subject to API rate limiting, so may fail
     # intermittently, in which case the script will fallback to building Nim.
-    local NIGHTLY_API_URL=https://api.github.com/repos/nim-lang/nightlies/releases
-
-    local NIGHTLY_DOWNLOAD_URL=$(curl $NIGHTLY_API_URL -SsLf \
+    local NIGHTLY_API_URL="https://api.github.com/repos/nim-lang/nightlies/releases"
+    local NIGHTLY_DOWNLOAD_URL=$(curl "$(github_api_curl_args)" -SsLf $NIGHTLY_API_URL \
       | grep "\"browser_download_url\": \".*${SUFFIX}\"" \
       | head -n 1 \
       | sed -n 's/".*\(https:.*\)".*/\1/p')
@@ -97,15 +116,14 @@ download_nightly() {
 
   if [[ ! -z "$NIGHTLY_DOWNLOAD_URL" ]]
   then
-    mkdir -p "${HOME}/.cache/nim-ci/nim-nightlies"
-    local NIGHTLY_ARCHIVE="${HOME}/.cache/nim-ci/nim-nightlies/$(basename $NIGHTLY_DOWNLOAD_URL)"
+    local NIGHTLY_ARCHIVE="/tmp/$(basename $NIGHTLY_DOWNLOAD_URL)"
     curl $NIGHTLY_DOWNLOAD_URL -SsLf -o $NIGHTLY_ARCHIVE
   else
     echo "No nightly build available for $HOST_OS $HOST_CPU"
     local NIGHTLY_ARCHIVE=""
   fi
 
-  local NIM_DIR="${HOME}/Nim-devel"
+  local NIM_DIR="${CHOOSENIM_DIR}/toolchains/nim-#devel"
   if [[ ! -z "$NIGHTLY_ARCHIVE" && -f "$NIGHTLY_ARCHIVE" ]]
   then
     rm -Rf "$NIM_DIR"
@@ -145,21 +163,42 @@ stable_nim_version () {
       | grep refs/tags/v \
       | tail -n 2 \
       | head -n 1 \
-      | sed 's/^.*tags\///')"
+      | sed 's/^.*tags\/v//')"
   fi
   echo "$NIM_STABLE_VERSION"
 }
 
 installed_nim_version () {
-  # Echoes the tag name of the installed version of Nim
-  if type -P nim &> /dev/null
+  # Echoes the tag name of the installed version of Nim.
+  # A path to a specific nim binary may be provided.
+  local NIM=${1:-nim}
+  if type -p "$NIM" &> /dev/null
   then
-    echo `nim -v | head -n 1 | sed -n 's/.*Version \(.*\) \\[.*/v\1/p'`
+    "$NIM" -v | head -n 1 | sed -n 's/.*Version \([^ ]\{1,\}\).*/\1/p'
+  fi
+}
+
+nim_version_to_git_ref () {
+  local VERSION="${1:-${NIM_VERSION}}"
+  if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+  then
+    # Semantic version tag
+    echo "v${VERSION}"
+  else
+    if [[ "$VERSION" == "stable" ]]
+    then
+      stable_nim_version
+    else
+      # branch name or commit hash
+      echo "$VERSION"
+    fi
   fi
 }
 
 install_nim_nightly_or_build_nim () {
   # Build Nim from source, sans choosenim
+
+  # Not actually using choosenim, but cache in same location.
   if [[ "$NIM_VERSION" == "devel" ]]
   then
     # Try downloading nightly build
@@ -169,42 +208,44 @@ install_nim_nightly_or_build_nim () {
       # Nightly build was downloaded
       return $RET_OK
     fi
-    # Note: don't cache $HOME/Nim-devel between builds
-    local NIMREPO=$HOME/Nim-devel
+    local TOOLCHAIN_ID="#devel"
   else
-    # Not actually using choosenim, but cache in same location.
-    local NIMREPO=$HOME/.choosenim/toolchains/nim-$NIM_VERSION-$HOST_CPU
-  fi
-
-  add_path "${NIMREPO}/bin"
-
-  if [[ -f "$NIMREPO/bin/nim" ]]
-  then
-    echo "Using cached Nim $NIMREPO"
-    return $RET_OK
-  else
-    echo "Building Nim $NIM_VERSION"
-    if [[ "$NIM_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]
+    if [[ "$NIM_VERSION" == "stable" ]]
     then
-       # Semantic version tag
-      local GITREF="v$NIM_VERSION"
+      TOOLCHAIN_ID=$(stable_nim_version)
     else
-      if [[ "$NIM_VERSION" == "stable" ]]
-      then
-        local GITREF=$(stable_nim_version)
-      else
-        local GITREF=$NIM_VERSION
-      fi
+      TOOLCHAIN_ID="$NIM_VERSION"
     fi
-    cd $NIMREPO
-    curl "https://api.github.com/repos/nim-lang/Nim/tarball/${GITREF}" -LsSf -o Nim.tar.gz
-    tar -xzf Nim.tar.gz -C .
-    cd nim-lang-Nim-*
-    sh build_all.sh
-    cd -
-    cd -
+    if [[ "$TOOLCHAIN_ID" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+    then
+      # Strip leading v for tags
+      TOOLCHAIN_ID=$(cat "$TOOLCHAIN_ID" | sed -n 's/^v//p')
+    fi
+  fi
+
+  local NIM_DIR="${CHOOSENIM_DIR}/toolchains/nim-${TOOLCHAIN_ID}-${HOST_CPU}"
+  mkdir -p "${NIM_DIR}"
+
+  add_path "${NIM_DIR}/bin"
+  if type -p "${NIM_DIR}/bin/nim" &> /dev/null
+  then
+    # TODO - pull/rebuild devel?
+    echo "Using cached Nim ${NIM_DIR}/bin/nim"
     return $RET_OK
   fi
+
+  local GITREF=$(nim_version_to_git_ref "$TOOLCHAIN_ID")
+  echo "Building Nim $GITREF"
+  cd $NIM_DIR
+  local TARBALL_URL="https://api.github.com/repos/nim-lang/Nim/tarball/${GITREF}"
+  curl "$(github_api_curl_args)" -LsSf $TARBALL_URL -o Nim.tar.gz
+  tar -xzf Nim.tar.gz
+  rm Nim.tar.gz
+  mv nim-lang-Nim-*/* . >/dev/null 2>&1 || true
+  mv nim-lang-Nim-*/.[a-z]* . >/dev/null 2>&1 || true
+  sh build_all.sh
+  cd - &>/dev/null
+  return $RET_OK
 }
 
 install_windows_git () {
@@ -217,12 +258,12 @@ install_windows_git () {
   local PORTABLE_GIT=https://github.com/git-for-windows/git/releases/download/v2.23.0.windows.1/PortableGit-2.23.0-64-bit.7z.exe
   curl -L -s $PORTABLE_GIT -o portablegit.exe
   7z x -y -bd portablegit.exe
-  cd -
+  cd - &>/dev/null
 }
 
 install_nim_with_choosenim () {
   # Install a Nim binary or build Nim from source, using choosenim
-  if ! type -P choosenim &> /dev/null
+  if ! type -p "${NIMBLE_DIR}/bin/choosenim" &> /dev/null
   then
     echo "Installing choosenim"
     if [[ "$HOST_OS" == "windows" ]]
@@ -232,40 +273,63 @@ install_nim_with_choosenim () {
 
     curl https://nim-lang.org/choosenim/init.sh -sSf -o choosenim-init.sh
     sh choosenim-init.sh -y
-    # cp "${HOME}/.nimble/bin/choosenim$BIN_EXT" "${GITBIN}/"
+    rm choosenim-init.sh
+    # cp "${NIMBLE_DIR}/bin/choosenim$BIN_EXT" "${GITBIN}/"
 
     # # Copy DLLs for choosenim
     # if [[ "$HOST_OS" == "windows" ]]
     # then
-    #   cp "${HOME}/.nimble/bin"/*.dll "${GITBIN}/"
+    #   cp "${NIMBLE_DIR}/bin"/*.dll "${GITBIN}/"
     # fi
     echo "Installed choosenim"
   else
     echo "choosenim already installed"
   fi
 
-  # rm -rf "${HOME}/.choosenim/current"
-  choosenim update $NIM_VERSION --yes
-  choosenim $NIM_VERSION --yes
+  # rm -rf "${CHOOSENIM_DIR}/current"
+  choosenim update $NIM_VERSION \
+    --yes --choosenimDir:"${CHOOSENIM_DIR}" --nimbleDir:"${NIMBLE_DIR}"
+  choosenim $NIM_VERSION \
+    --yes --choosenimDir:"${CHOOSENIM_DIR}" --nimbleDir:"${NIMBLE_DIR}"
 }
 
-detect_nim_project_type () {
-  # Determine if project exports a binary executable or is a library
+collect_project_metadata () {
+  # Collect and export metadata about the Nim project
+
+  # Autodetect the location of the nim project if not explicitly provided
+  # as either $1 or $NIM_PROJECT_DIR.
+  export NIM_PROJECT_DIR="${1:-${NIM_PROJECT_DIR:-}}"
+  if [[ -z "$NIM_PROJECT_DIR" ]]
+  then
+    local NIMBLE_FILE=$(find_nimble_file "${PWD}")
+    export NIM_PROJECT_DIR=$(dirname "$NIMBLE_FILE")
+  else
+    local NIMBLE_FILE=$(find_nimble_file "$NIM_PROJECT_DIR")
+  fi
+
+  # Make absolute
+  export NIM_PROJECT_DIR=$(realpath "$NIM_PROJECT_DIR")
   cd "$NIM_PROJECT_DIR"
 
-  local thenimble="$(which nimble || true)"
-  echo "which nimble is ${thenimble}"
-  if [[ -f "$thenimble" ]]
-  then
-    echo "$thenimble is a file"
-  else
-    echo "$thenimble is NOT a file"
-  fi
+  export NIM_PROJECT_NAME=$(basename "$NIMBLE_FILE" | sed -n 's/\(.*\)\.nimble$/\1/p')
+
+  export NIM_PROJECT_VERSION=$(\
+    nimble dump \
+      | grep version: \
+      | sed -e 's/version: //g' \
+      | sed -e 's/"*//g')
+
+  export ARTIFACTS_DIR="${ARTIFACTS_DIR:-${NIM_PROJECT_DIR}/artifacts}"
+  mkdir -p "$ARTIFACTS_DIR"
+
   export SRC_DIR=$(\
     nimble dump \
       | grep srcDir: \
       | sed -e 's/srcDir: //g' \
       | sed -e 's/"*//g')
+
+  # Make absolute
+  export SRC_DIR="${NIM_PROJECT_DIR}/${SRC_DIR}"
 
   if [[ ! -z "$(nimble dump | grep '^bin: ""')" ]]
   then
@@ -297,9 +361,8 @@ detect_nim_project_type () {
     # Make absolute
     export BIN_DIR="${NIM_PROJECT_DIR}/${BIN_DIR}"
     mkdir -p "${BIN_DIR}"
-    export BIN_DIR=$(cd "$BIN_DIR"; pwd)
   fi
-  cd -
+  cd - &>/dev/null
 }
 
 install_nim_project () {
@@ -315,7 +378,7 @@ install_nim_project () {
     # Install library, symlinked
     nimble develop -y
   fi
-  cd -
+  cd - &>/dev/null
 }
 
 make_bin_artifacts () {
@@ -329,7 +392,6 @@ make_bin_artifacts () {
     cp "$BIN" "$BIN_DIST_PATH"
     echo "Made bin artifact $BIN_DIST_PATH"
   done
-  # TODO - Better the multi-bin case - a zipball?
 }
 
 make_source_artifact () {
@@ -342,7 +404,7 @@ make_source_artifact () {
   local ARCHIVE="${ARTIFACTS_DIR}/${NIM_PROJECT_NAME}-${NIM_PROJECT_VERSION}${ZIP_EXT}"
   cd "${NIM_PROJECT_DIR}"
   git archive --output="${ARCHIVE}" HEAD .
-  cd -
+  cd - &>/dev/null
   echo "Made source artifact $ARCHIVE"
 }
 
@@ -351,7 +413,7 @@ all_the_things () {
 
   cd "$NIM_PROJECT_DIR"
   nimble test
-  cd -
+  cd - &>/dev/null
 
   if [[ "$NIM_PROJECT_TYPE" == "binary" || "$NIM_PROJECT_TYPE" == "hybrid" ]]
   then
@@ -381,7 +443,7 @@ install_nim () {
     return $RET_OK
   fi
 
-  add_path "${HOME}/.nimble/bin"
+  add_path "${NIMBLE_DIR}/bin"
 
   if [[ "$USE_CHOOSENIM" == "yes" ]]
   then
@@ -419,83 +481,58 @@ init () {
 
   # Use Nim stable if NIM_VERSION not set.
   # An earlier version of this script used BRANCH as the env var name.
-  export NIM_VERSION=${NIM_VERSION:-${BRANCH:-"stable"}}
+  export NIM_VERSION=${NIM_VERSION:-${BRANCH:-${CHOOSENIM_CHOOSE_VERSION:-"stable"}}}
+  export CHOOSENIM_CHOOSE_VERSION="$NIM_VERSION"
 
-  export HOST_OS=$(normalize_to_host_os "$(uname)")
-  export HOST_CPU=$(normalize_to_host_cpu "$(uname -m)")
+  # Default to no choosenim analytics, unless explicitly requested
+  export CHOOSENIM_NO_ANALYTICS=${CHOOSENIM_NO_ANALYTICS:-1}
 
-  export BIN_EXT=""
+  export CHOOSENIM_DIR=${CHOOSENIM_DIR:-"${HOME}/.choosenim"}
+  export NIMBLE_DIR=${NIMBLE_DIR:-"${HOME}/.nimble"}
 
   case $HOST_OS in
-    macosx)
-      # Work around https://github.com/nim-lang/Nim/issues/12337 fixed in 1.0+
-      ulimit -n 8192
-      ;;
-    windows)
-      export BIN_EXT=.exe
-      ;;
+    # Work around https://github.com/nim-lang/Nim/issues/12337 fixed in 1.0+
+    macosx) ulimit -n 8192 ;;
   esac
 
-  # Autodetect whether to use choosenim or build Nim from source, based on
-  # architecture
-  if [[ -z "${USE_CHOOSENIM:-}" ]]
-  then
-    case "$HOST_CPU" in
-      amd64) export USE_CHOOSENIM=yes ;;
-      # choosenim doesn't have binaries for non-amd64 yet
-      *) export USE_CHOOSENIM=no ;;
-    esac
-  else
-    # normalize
-    case "$USE_CHOOSENIM" in
-      yes|true|1) export USE_CHOOSENIM=yes ;;
-      *) export USE_CHOOSENIM=no ;;
-    esac
-  fi
-
-  # Autodetect the location of the nim project if not explicitly provided.
-  if [[ -z "${NIM_PROJECT_DIR:-}" ]]
-  then
-    local NIMBLE_FILE=$(find_nimble_file .)
-    export NIM_PROJECT_DIR=$(dirname "$NIMBLE_FILE")
-  else
-    local NIMBLE_FILE=$(find_nimble_file "$NIM_PROJECT_DIR")
-  fi
-
-  # Make NIM_PROJECT_DIR absolute
-  export NIM_PROJECT_DIR=$(cd "$NIM_PROJECT_DIR"; pwd)
-  export NIM_PROJECT_NAME=$(basename "$NIMBLE_FILE" | sed -n 's/\(.*\)\.nimble$/\1/p')
+  case "${USE_CHOOSENIM:-auto}" in
+    1|y|yes|true) export USE_CHOOSENIM="yes" ;;
+    0|n|no|false) export USE_CHOOSENIM="no" ;;
+    auto)
+      # Autodetect whether to use choosenim or build Nim from source, based on
+      # architecture
+      case "$HOST_CPU" in
+        amd64) export USE_CHOOSENIM="yes" ;;
+        # choosenim doesn't have binaries for non-amd64 yet
+        *) export USE_CHOOSENIM="no" ;;
+      esac
+      ;;
+    *)
+      echo "Unknown value for USE_CHOOSENIM: $USE_CHOOSENIM"
+      exit 1
+      ;;
+  esac
 
   install_nim
   if [[ "$?" != 0 ]]
   then
-    echo "Error installing Nim"
+    echo "Error installing Nim $NIM_VERSION"
     exit 1
   fi
 
-  cd "$NIM_PROJECT_DIR"
-  export NIM_PROJECT_VERSION=$(\
-    nimble dump \
-      | grep version: \
-      | sed -e 's/version: //g' \
-      | sed -e 's/"*//g')
-  cd -
-
-  export ARTIFACTS_DIR="${ARTIFACTS_DIR:-${NIM_PROJECT_DIR}/artifacts}"
-  mkdir -p "$ARTIFACTS_DIR"
-  detect_nim_project_type
+  collect_project_metadata
 
   # Dump config for debugging.
   VARNAMES=(
-    "ARTIFACTS_DIR" "BIN_DIR" "BIN_EXT" "HOST_CPU" "HOST_OS" "NIM_PROJECT_DIR" \
-    "NIM_PROJECT_NAME" "NIM_PROJECT_TYPE" "NIM_VERSION" "SRC_DIR" \
-    "USE_CHOOSENIM" )
+    "ARTIFACTS_DIR" "BIN_DIR" "BIN_EXT" "CHOOSENIM_DIR" "HOST_CPU" "HOST_OS" \
+    "NIM_PROJECT_DIR" "NIM_PROJECT_NAME" "NIM_PROJECT_TYPE" "NIM_VERSION" \
+    "NIMBLE_DIR" "SRC_DIR" "USE_CHOOSENIM" )
   echo
   echo ">>> nim-ci config >>>"
   echo
   for VARNAME in "${VARNAMES[@]}"
   do
-    eval echo "${VARNAME}::$(echo '$VARNAME')"
+    eval "echo \"${VARNAME}::\$(echo \$${VARNAME})\""
   done
   echo
   echo "<<< nim-ci config <<<"
@@ -504,7 +541,7 @@ init () {
   if [[ ! -z "${GITHUB_WORKFLOW:-}" ]]
   then
     # Echoing ::set-output makes these variables available in subsequent
-    # GitHub Actions steps via
+    # GitHub actions steps via
     # ${{ steps.<step-id>.outputs.VARNAME }}
     # where <step-id> is the YAML id: for the  step that ran this script.
     for VARNAME in "${VARNAMES[@]}"
@@ -514,4 +551,12 @@ init () {
   fi
 }
 
-init
+export HOST_OS=$(normalize_to_host_os "$(uname)")
+export HOST_CPU=$(normalize_to_host_cpu "$(uname -m)")
+export BIN_EXT=""
+
+case $HOST_OS in
+  windows) export BIN_EXT=".exe" ;;
+esac
+
+case "${INIT_NIM_CI:-"yes"}" in 1|y|yes|true) init ;; esac
