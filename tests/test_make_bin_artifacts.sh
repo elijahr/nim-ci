@@ -4,7 +4,6 @@
 
 source setup.sh
 
-INIT_NIM_CI=no
 NIM_PROJECT_DIR="$(cd nim_projects/nested/nimcibinary; pwd)"
 
 source ../nim-ci.sh
@@ -16,7 +15,6 @@ cleanup () {
 trap cleanup EXIT
 
 mkdir -p "${NIM_PROJECT_DIR}/bin"
-
 echo "this is an artifact" >> "${NIM_PROJECT_DIR}/bin/artifact${BIN_EXT}"
 
 make_bin_artifacts
