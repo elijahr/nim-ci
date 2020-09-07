@@ -66,6 +66,8 @@ jobs:
         include:
           - nim_version: stable
             arch: aarch64
+          - nim_version: stable
+            arch: ppc64le
 
     steps:
       - name: Setup cache
@@ -98,13 +100,13 @@ jobs:
           setup: |
             mkdir -p ~/.choosenim
             mkdir -p ~/.nimble
-            mkdir -p ./artifacts
+            mkdir -p ~/artifacts
 
           # Mount cached directories in the container for faster builds
           dockerRunArgs: |
             --volume "${HOME}/.choosenim:/root/.choosenim"
             --volume "${HOME}/.nimble:/root/.nimble"
-            --volume ./artifacts:/artifacts
+            --volume "${HOME}/artifacts:/artifacts
 
           run: |
             apt-get update -q
@@ -119,4 +121,4 @@ jobs:
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v2
         with:
-          path: ./artifacts/*
+          path: ${{ HOME }}/artifacts/*
