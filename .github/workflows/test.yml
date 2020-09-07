@@ -31,7 +31,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           NIM_CI_TEST_FULL_CLEAN: yes
-        run: ./tests/run.sh
+        run: |
+          bash ./tests/run.sh
 
   # Build for Linux aarch64, ppc64le, etc
   test_linux_other_archs:
@@ -56,4 +57,5 @@ jobs:
           env: |
             GITHUB_TOKEN: ${{ github.token }}
             NIM_CI_TEST_FULL_CLEAN: yes
-          run: ./tests/run.sh
+          run: |
+            bash ./tests/run.sh
