@@ -275,11 +275,18 @@ install_nim_with_choosenim () {
   else
     echo "choosenim already installed"
   fi
+  mkdir -p "${CHOOSENIM_DIR}"
+  mkdir -p "${NIMBLE_DIR}"
   add_path "${NIMBLE_DIR}/bin"
   add_path "${CHOOSENIM_DIR}/bin"
 
-  mkdir -p "${CHOOSENIM_DIR}"
-  mkdir -p "${NIMBLE_DIR}"
+  if [[ ! -f "${NIMBLE_DIR}/bin/choosenim" && \
+        "${NIMBLE_DIR}" != "${HOME}/.nimble" ]]
+  then
+    # If a custom NIMBLE_DIR was provided choosenim won't have installed there,
+    # so update PATH to include choosenim.
+    add_path "${HOME}/.nimble"
+  fi
 
   # rm -rf "${CHOOSENIM_DIR}/current"
   choosenim update $NIM_VERSION \
