@@ -48,6 +48,8 @@ jobs:
           curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
           source nim-ci.sh
 
+          ln -s "${ARTIFACTS_DIR}" ./artifacts
+
           all_the_things
 
       - name: Upload artifacts
@@ -115,10 +117,12 @@ jobs:
             curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
             source nim-ci.sh
 
+            ln -s "${ARTIFACTS_DIR}" ./artifacts
+
             all_the_things
 
       - name: Upload artifacts
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v2
         with:
-          path: ${{ HOME }}/artifacts/*
+          path: ./artifacts/*
