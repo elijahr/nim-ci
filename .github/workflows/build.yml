@@ -9,7 +9,7 @@ on:
 
 jobs:
   build_amd64:
-    name: Build ${{ matrix.nim_host_os }}_amd64
+    name: Build ${{ matrix.builder }} x86_64
     runs-on: ${{ matrix.builder }}
 
     strategy:
@@ -33,8 +33,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            ~/.choosenim_${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
-            ~/.nimble_${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
+            ~/.choosenim
+            ~/.nimble
+          key: ${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
 
       - name: Install & build
         id: build
@@ -44,9 +45,6 @@ jobs:
           NIM_CI_VERSION: github-workflows # or vX.Y.Z to lock to a specific nim-ci version
         shell: bash
         run: |
-          ln -s ~/.choosenim_${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64 ~/.choosenim
-          ln -s ~/.nimble_${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64 ~/.nimble
-
           curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
           source nim-ci.sh
 
@@ -60,23 +58,23 @@ jobs:
 
   # Build for Linux aarch64, ppc64le, etc
   build_linux_other_archs:
-    name: Build linux_${{ matrix.nim_host_cpu }}
+    name: Build ubuntu-18.04
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         include:
-          - nim_version: stable # The version of Nim to test with
-            arch: aarch64 # For run-on-arch-action
+          - nim_version: stable
+            arch: aarch64
 
     steps:
       - name: Setup cache
         uses: actions/cache@v2
         with:
           path: |
-            ~/.choosenim-ubuntu-18.04-${{ matrix.arch }}
-            ~/.nimble-ubuntu-18.04-${{ matrix.arch }}
-          key: ${{ matrix.nim_version }}_linux_${{ matrix.arch }}
+            ~/.choosenim
+            ~/.nimble
+          key: ${{ matrix.nim_version }}_ubuntu-18.04_${{ matrix.arch }}
 
       - uses: actions/checkout@v2.1.0
 
@@ -98,14 +96,14 @@ jobs:
 
           # Create cached directories
           setup: |
-            mkdir -p ~/.choosenim-ubuntu-18.04-${{ matrix.arch }}
-            mkdir -p ~/.nimble-ubuntu-18.04-${{ matrix.arch }}
+            mkdir -p ~/.choosenim
+            mkdir -p ~/.nimble
             mkdir -p ./artifacts
 
           # Mount cached directories in the container for faster builds
           dockerRunArgs: |
-            --volume ~/.choosenim-ubuntu-18.04-${{ matrix.arch }}:/root/.choosenim
-            --volume ~/.nimble-ubuntu-18.04-${{ matrix.arch }}:/root/.nimble
+            --volume "${HOME}/.choosenim:/root/.choosenim"
+            --volume "${HOME}/.nimble:/root/.nimble"
             --volume ./artifacts:/artifacts
 
           run: |
