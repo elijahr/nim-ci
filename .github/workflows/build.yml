@@ -108,7 +108,7 @@ jobs:
           dockerRunArgs: |
             --volume "${HOME}/.choosenim:/root/.choosenim"
             --volume "${HOME}/.nimble:/root/.nimble"
-            --volume "${HOME}/artifacts:/artifacts
+            --volume "${HOME}/artifacts:/artifacts"
 
           run: |
             apt-get update -q
