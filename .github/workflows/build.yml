@@ -112,7 +112,7 @@ jobs:
 
           # Install some deps, gets cached as a docker image layer
           install: |
-            apt-get update -q -y
+            apt-get update -q
             apt-get install -q -y build-essential git curl bash
 
           run: |
