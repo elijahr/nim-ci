@@ -98,7 +98,7 @@ jobs:
             NIM_VERSION: ${{ matrix.nim_version }}
             NIM_CI_VERSION: github-workflows
 
-          # Create cached directories
+          # Create cached directories on host
           setup: |
             mkdir -p ~/.choosenim
             mkdir -p ~/.nimble
@@ -110,10 +110,12 @@ jobs:
             --volume "${HOME}/.nimble:/root/.nimble"
             --volume "${HOME}/artifacts:/artifacts"
 
-          run: |
-            apt-get update -q
+          # Install some deps, gets cached as a docker image layer
+          install: |
+            apt-get update -q -y
             apt-get install -q -y build-essential git curl bash
 
+          run: |
             curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
             source nim-ci.sh
 
