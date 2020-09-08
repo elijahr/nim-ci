@@ -252,6 +252,11 @@ install_windows_git () {
 }
 
 install_nim_with_choosenim () {
+  mkdir -p "${CHOOSENIM_DIR}"
+  mkdir -p "${NIMBLE_DIR}"
+  add_path "${NIMBLE_DIR}/bin"
+  add_path "${CHOOSENIM_DIR}/bin"
+
   # Install a Nim binary or build Nim from source, using choosenim
   if ! type -p "${NIMBLE_DIR}/bin/choosenim" &> /dev/null
   then
@@ -284,10 +289,6 @@ install_nim_with_choosenim () {
   else
     echo "choosenim already installed"
   fi
-  mkdir -p "${CHOOSENIM_DIR}"
-  mkdir -p "${NIMBLE_DIR}"
-  add_path "${NIMBLE_DIR}/bin"
-  add_path "${CHOOSENIM_DIR}/bin"
 
   if [[ ! -f "${NIMBLE_DIR}/bin/choosenim" && \
         "${NIMBLE_DIR}" != "${HOME}/.nimble" ]]
