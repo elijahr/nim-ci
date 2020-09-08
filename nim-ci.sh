@@ -98,7 +98,7 @@ download_nightly() {
     # Fetch nightly download url. This is subject to API rate limiting, so may fail
     # intermittently, in which case the script will fallback to building Nim.
     local NIGHTLY_API_URL="https://api.github.com/repos/nim-lang/nightlies/releases"
-    local NIGHTLY_DOWNLOAD_URL=$(curl "$(github_api_curl_args)" -SsLf $NIGHTLY_API_URL \
+    local NIGHTLY_DOWNLOAD_URL=$(curl $NIGHTLY_API_URL $(github_api_curl_args) -LsSf \
       | grep "\"browser_download_url\": \".*${SUFFIX}\"" \
       | head -n 1 \
       | sed -n 's/".*\(https:.*\)".*/\1/p')
@@ -107,7 +107,7 @@ download_nightly() {
   if [[ ! -z "$NIGHTLY_DOWNLOAD_URL" ]]
   then
     local NIGHTLY_ARCHIVE="/tmp/$(basename $NIGHTLY_DOWNLOAD_URL)"
-    curl $NIGHTLY_DOWNLOAD_URL -SsLf -o $NIGHTLY_ARCHIVE
+    curl $NIGHTLY_DOWNLOAD_URL -LsSf -o $NIGHTLY_ARCHIVE
   else
     echo "No nightly build available for $HOST_OS $HOST_CPU"
     local NIGHTLY_ARCHIVE=""
@@ -228,7 +228,7 @@ install_nim_nightly_or_build_nim () {
   echo "Building Nim $GITREF"
   cd $NIM_DIR
   local TARBALL_URL="https://api.github.com/repos/nim-lang/Nim/tarball/${GITREF}"
-  curl "$(github_api_curl_args)" -LsSf $TARBALL_URL -o Nim.tar.gz
+  curl "$TARBALL_URL" $(github_api_curl_args) -LsSf -o Nim.tar.gz
   tar -xzf Nim.tar.gz
   rm Nim.tar.gz
   mv nim-lang-Nim-*/* . >/dev/null 2>&1 || true
@@ -263,7 +263,7 @@ install_nim_with_choosenim () {
     fi
 
     # curl https://nim-lang.org/choosenim/init.sh -sSf -o choosenim-init.sh
-    curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/choosenim-init.sh -sSf -o choosenim-init.sh
+    curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/choosenim-init.sh -LsSf -o choosenim-init.sh
     sh choosenim-init.sh -y
     rm choosenim-init.sh
 
