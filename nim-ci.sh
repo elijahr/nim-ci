@@ -239,14 +239,10 @@ install_nim_nightly_or_build_nim () {
 }
 
 install_windows_git () {
-  # Acquire git
-  local GITBIN="${HOME}/.cache/nim-ci/git/bin"
-  mkdir -p "$GITBIN"
-  add_path "$GITBIN"
-  # Setup git outside "Program Files", space breaks cmake sh.exe
-  cd "$GITBIN/.."
-  local PORTABLE_GIT=https://github.com/git-for-windows/git/releases/download/v2.23.0.windows.1/PortableGit-2.23.0-64-bit.7z.exe
-  curl -L -s $PORTABLE_GIT -o portablegit.exe
+  # Install Git for Windows
+  cd "${NIM_CI_CACHE}"
+  curl https://github.com/git-for-windows/git/releases/download/v2.23.0.windows.1/PortableGit-2.23.0-64-bit.7z.exe \
+    -LsSf -o portablegit.exe
   7z x -y -bd portablegit.exe
   cd - &>/dev/null
 }
@@ -271,22 +267,19 @@ install_nim_with_choosenim () {
     sh choosenim-init.sh -y
     rm choosenim-init.sh
 
-    # Copy GITBIN contents
-    # if [[ "$HOST_OS" == "windows" ]]
-    # then
-    #   local GITBIN="${HOME}/.cache/nim-ci/git/bin"
-    #   mkdir -p "${GITBIN}"
-    #   for ITEM in "${GITBIN}"/*.exe
-    #   do
-    #     [ -e "$ITEM" ] || continue
-    #     cp "$ITEM" "${NIMBLE_DIR}/"
-    #   done
-    #   for ITEM in "${GITBIN}"/*.dll
-    #   do
-    #     [ -e "$ITEM" ] || continue
-    #     cp "$ITEM" "${NIMBLE_DIR}/"
-    #   done
-    # fi
+    if [[ "$HOST_OS" == "windows" ]]
+    then
+      # Workaround for error in choosenim on GitHub Actions windows-latest:
+      # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
+      # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
+      # fetch and extract.
+      if [[ ! -f "${NIM_CI_CACHE}/dlls.zip" ]]
+      then
+        curl http://nim-lang.org/download/dlls.zip -LsSf -o "${NIM_CI_CACHE}/dlls.zip"
+      fi
+      # FYI - ${NIM_CI_CACHE}/bin is already in PATH
+      unzip -q "${NIM_CI_CACHE}/dlls.zip" -d "${NIM_CI_CACHE}/bin" || true
+    fi
     echo "Installed choosenim"
   else
     echo "choosenim already installed"
@@ -563,6 +556,10 @@ init () {
     done
   fi
 }
+
+export NIM_CI_CACHE="${HOME}/.cache/nim-ci"
+mkdir -p "${NIM_CI_CACHE}/bin"
+add_path "${NIM_CI_CACHE}/bin"
 
 export HOST_OS=$(normalize_to_host_os "$(uname)")
 export HOST_CPU=$(normalize_to_host_cpu "$(uname -m)")
