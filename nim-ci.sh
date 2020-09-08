@@ -278,10 +278,12 @@ install_nim_with_choosenim () {
       mkdir -p "${GITBIN}"
       for ITEM in "${GITBIN}"/*.exe
       do
+        [ -e "$ITEM" ] || continue
         cp "$ITEM" "${NIMBLE_DIR}/"
       done
       for ITEM in "${GITBIN}"/*.dll
       do
+        [ -e "$ITEM" ] || continue
         cp "$ITEM" "${NIMBLE_DIR}/"
       done
     fi
