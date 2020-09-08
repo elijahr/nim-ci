@@ -112,8 +112,8 @@ jobs:
 
           # Install some deps, gets cached as a docker image layer
           install: |
-            apt-get update -q
-            apt-get install -q -y build-essential git curl bash
+            apt-get update -q -y
+            apt-get install build-essential git curl bash -q -y 
 
           run: |
             curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
