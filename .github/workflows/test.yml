@@ -57,7 +57,7 @@ jobs:
           env: |
             GITHUB_TOKEN: ${{ github.token }}
             NIM_CI_TEST_FULL_CLEAN: yes
-          install:
+          install: |
             apt-get update -q -y
             apt-get install git curl build-essential -q -y
           run: |
