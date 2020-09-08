@@ -62,7 +62,7 @@ github_api_curl_args () {
   if [[ ! -z "${GITHUB_TOKEN:-}" ]]
   then
     # Set GITHUB_TOKEN env var to avoid rate-limiting
-    echo "-Hauthorization: Bearer ${GITHUB_TOKEN}"
+    echo "-Hauthorization:\ Bearer\ ${GITHUB_TOKEN}"
   fi
 }
 
