@@ -272,21 +272,21 @@ install_nim_with_choosenim () {
     rm choosenim-init.sh
 
     # Copy GITBIN contents
-    if [[ "$HOST_OS" == "windows" ]]
-    then
-      local GITBIN="${HOME}/.cache/nim-ci/git/bin"
-      mkdir -p "${GITBIN}"
-      for ITEM in "${GITBIN}"/*.exe
-      do
-        [ -e "$ITEM" ] || continue
-        cp "$ITEM" "${NIMBLE_DIR}/"
-      done
-      for ITEM in "${GITBIN}"/*.dll
-      do
-        [ -e "$ITEM" ] || continue
-        cp "$ITEM" "${NIMBLE_DIR}/"
-      done
-    fi
+    # if [[ "$HOST_OS" == "windows" ]]
+    # then
+    #   local GITBIN="${HOME}/.cache/nim-ci/git/bin"
+    #   mkdir -p "${GITBIN}"
+    #   for ITEM in "${GITBIN}"/*.exe
+    #   do
+    #     [ -e "$ITEM" ] || continue
+    #     cp "$ITEM" "${NIMBLE_DIR}/"
+    #   done
+    #   for ITEM in "${GITBIN}"/*.dll
+    #   do
+    #     [ -e "$ITEM" ] || continue
+    #     cp "$ITEM" "${NIMBLE_DIR}/"
+    #   done
+    # fi
     echo "Installed choosenim"
   else
     echo "choosenim already installed"
