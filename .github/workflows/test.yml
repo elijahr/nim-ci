@@ -49,7 +49,7 @@ jobs:
       - uses: actions/checkout@v2.1.0
       - name: Run tests
         id: test
-        uses: elijahr/run-on-arch-action@fix-args
+        uses: uraimo/run-on-arch-action@2.0.2
         with:
           arch: ${{ matrix.arch }}
           distro: ubuntu18.04

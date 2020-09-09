@@ -11,9 +11,9 @@ RET_PASS=0
 RET_FAIL=1
 RET_SKIP=2
 
-ASSERT_STATUS=0
+ASSERT_FAILED=0
 
-TMP_DIR="$(mktemp -d -t nim-ci-XXXXXXX)"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/nim-ci-XXXXXXX")"
 CHOOSENIM_DIR="${TMP_DIR}/choosenim"
 NIMBLE_DIR="${TMP_DIR}/nimble"
 PATH="${NIMBLE_DIR}/bin:$PATH"
@@ -35,10 +35,11 @@ on_exit () {
     rm -rf "${HOME}/.nim"
     rm -rf "${HOME}/.choosenim"
     rm -rf "${HOME}/.cache/nim"
+    rm -rf "${HOME}/.cache/nim-ci"
   fi
-  if [[ "$ASSERT_STATUS" != 0 ]]
+  if [[ "$ASSERT_FAILED" != 0 ]]
   then
-    exit $ASSERT_STATUS
+    exit $ASSERT_FAILED
   fi
 }
 
@@ -55,25 +56,34 @@ join_string_array () {
 }
 
 fail () {
-  ASSERT_STATUS=1
+  ASSERT_FAILED=1
   echo "❌ $1"
   exit 1
 }
 
 assert () {
   set +e
-  case ${#@} in
-    1) test "$1" ;;
-    2) test "$1" "$2" ;;
-    3) test "$1" "$2" "$3" ;;
-    4) test "$1" "$2" "$3" "$4" ;;
-    *) fail "Unhandled number of arguments: $@" ;;
-  esac
+  if [[ "$1" == "[[" ]]
+  then
+    case ${#@} in
+      4) eval "[[ $2 '$3' ]]" ;;
+      5) eval "[[ '$2' $3 '$4' ]]" ;;
+      *) fail "Unhandled number of arguments: $@" ;;
+    esac
+  else
+    case ${#@} in
+      1) test "$1" ;;
+      2) test "$1" "$2" ;;
+      3) test "$1" "$2" "$3" ;;
+      4) test "$1" "$2" "$3" "$4" ;;
+      *) fail "Unhandled number of arguments: $@" ;;
+    esac
+  fi
   STAT=$?
   set -e
   case $STAT in
     0) printf "✅" ;;
-    *) ASSERT_STATUS=$STAT; printf "❌" ;;
+    *) ASSERT_FAILED=$STAT; printf "❌" ;;
   esac
   printf " assert $(join_string_array " " $@)"
   echo
@@ -86,7 +96,7 @@ assert_type () {
   set -e
   case $STAT in
     0) printf "✅" ;;
-    *) ASSERT_STATUS=$STAT; printf "❌" ;;
+    *) ASSERT_FAILED=$STAT; printf "❌" ;;
   esac
   printf " assert_type $(join_string_array " " $@)"
   echo

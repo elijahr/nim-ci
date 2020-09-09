@@ -86,7 +86,7 @@ jobs:
       # See https://github.com/uraimo/run-on-arch-action for docs.
       - name: Build
         id: build
-        uses: elijahr/run-on-arch-action@fix-args
+        uses: uraimo/run-on-arch-action@2.0.2
         with:
           arch: ${{ matrix.arch }}
           distro: ubuntu18.04
@@ -113,7 +113,7 @@ jobs:
           # Install some deps, gets cached as a docker image layer
           install: |
             apt-get update -q -y
-            apt-get install build-essential git curl bash -q -y 
+            apt-get install build-essential git curl bash -q -y
 
           run: |
             curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh

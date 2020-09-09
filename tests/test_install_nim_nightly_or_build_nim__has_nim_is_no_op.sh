@@ -35,4 +35,4 @@ cleanup () {
 
 trap cleanup EXIT
 
-assert "$(install_nim_nightly_or_build_nim)" == "Using cached Nim $NIM"
+assert "[[ '$(install_nim_nightly_or_build_nim)' == *'Using cached Nim $NIM'* ]]"

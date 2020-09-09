@@ -9,7 +9,7 @@ export RET_ERROR=1
 add_path () {
   # Add an entry to PATH
   export PATH="$1:$PATH"
-  if [[ ! -z "${GITHUB_WORKFLOW:-}" ]]
+  if [[ "${GITHUB_ACTIONS:-}" == "true" ]]
   then
     # GitHub Actions syntax for adding to path across steps
     echo "::add-path::$1"
@@ -62,7 +62,7 @@ github_api_curl_args () {
   if [[ ! -z "${GITHUB_TOKEN:-}" ]]
   then
     # Set GITHUB_TOKEN env var to avoid rate-limiting
-    echo "-Hauthorization:\\ Bearer\\ ${GITHUB_TOKEN}"
+    echo "-H Authorization:\\ Bearer\\ ${GITHUB_TOKEN}"
   fi
 }
 
@@ -98,7 +98,7 @@ download_nightly() {
     # Fetch nightly download url. This is subject to API rate limiting, so may fail
     # intermittently, in which case the script will fallback to building Nim.
     local NIGHTLY_API_URL="https://api.github.com/repos/nim-lang/nightlies/releases"
-    local NIGHTLY_DOWNLOAD_URL=$(curl $NIGHTLY_API_URL $(github_api_curl_args) -LsSf \
+    local NIGHTLY_DOWNLOAD_URL=$(eval curl $NIGHTLY_API_URL $(github_api_curl_args) -LsSf \
       | grep "\"browser_download_url\": \".*${SUFFIX}\"" \
       | head -n 1 \
       | sed -n 's/".*\(https:.*\)".*/\1/p')
@@ -214,7 +214,7 @@ install_nim_nightly_or_build_nim () {
   fi
 
   local NIM_DIR="${CHOOSENIM_DIR}/toolchains/nim-${TOOLCHAIN_ID}-${HOST_CPU}"
-  mkdir -p "${NIM_DIR}"
+  mkdir -p "$NIM_DIR"
 
   add_path "${NIM_DIR}/bin"
   if type -p "${NIM_DIR}/bin/nim" &> /dev/null
@@ -228,7 +228,7 @@ install_nim_nightly_or_build_nim () {
   echo "Building Nim $GITREF"
   cd $NIM_DIR
   local TARBALL_URL="https://api.github.com/repos/nim-lang/Nim/tarball/${GITREF}"
-  curl "$TARBALL_URL" $(github_api_curl_args) -LsSf -o Nim.tar.gz
+  eval curl "$TARBALL_URL" $(github_api_curl_args) -LsSf -o Nim.tar.gz
   tar -xzf Nim.tar.gz
   rm Nim.tar.gz
   mv nim-lang-Nim-*/* . >/dev/null 2>&1 || true
@@ -263,9 +263,12 @@ install_nim_with_choosenim () {
     fi
 
     # curl https://nim-lang.org/choosenim/init.sh -sSf -o choosenim-init.sh
-    curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/choosenim-init.sh -LsSf -o choosenim-init.sh
-    sh choosenim-init.sh -y
-    rm choosenim-init.sh
+    if [[ ! -f "${NIM_CI_CACHE}/choosenim-init.sh" ]]
+    then
+      curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/choosenim-init.sh \
+        -LsSf -o "${NIM_CI_CACHE}/choosenim-init.sh"
+    fi
+    sh "${NIM_CI_CACHE}/choosenim-init.sh" -y
 
     if [[ "$HOST_OS" == "windows" ]]
     then
@@ -544,7 +547,7 @@ init () {
   echo "<<< nim-ci config <<<"
   echo
 
-  if [[ ! -z "${GITHUB_WORKFLOW:-}" ]]
+  if [[ "${GITHUB_ACTIONS:-}" == "true" ]]
   then
     # Echoing ::set-output makes these variables available in subsequent
     # GitHub actions steps via
