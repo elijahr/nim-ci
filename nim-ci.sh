@@ -253,6 +253,8 @@ install_nim_with_choosenim () {
   add_path "${NIMBLE_DIR}/bin"
   add_path "${CHOOSENIM_DIR}/bin"
 
+
+
   # Install a Nim binary or build Nim from source, using choosenim
   if ! type -p "${NIMBLE_DIR}/bin/choosenim" &> /dev/null
   then
@@ -280,6 +282,13 @@ install_nim_with_choosenim () {
       then
         curl http://nim-lang.org/download/dlls.zip -LsSf -o "${NIM_CI_CACHE}/dlls.zip"
       fi
+
+      # Workaround for error in choosenim on GitHub Actions windows-latest:
+      # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
+      # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
+      # fetch and extract.
+      rm -rf "${CHOOSNIM_DIR}/downloads"
+
       # FYI - ${NIM_CI_CACHE}/bin is already in PATH
       unzip -q "${NIM_CI_CACHE}/dlls.zip" -d "${NIM_CI_CACHE}/bin" || true
     fi
@@ -296,8 +305,21 @@ install_nim_with_choosenim () {
     add_path "${HOME}/.nimble/bin"
   fi
 
-  # rm -rf "${CHOOSENIM_DIR}/current"
+  # Workaround for error in choosenim on GitHub Actions windows-latest:
+  # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
+  # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
+  # fetch and extract.
+  rm -rf "${CHOOSNIM_DIR}/downloads"
+
+  rm -rf "${CHOOSENIM_DIR}/current"
   choosenim update $NIM_VERSION --yes ${CHOOSENIM_ARGS:-}
+
+  # Workaround for error in choosenim on GitHub Actions windows-latest:
+  # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
+  # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
+  # fetch and extract.
+  rm -rf "${CHOOSNIM_DIR}/downloads"
+
   choosenim $NIM_VERSION --yes ${CHOOSENIM_ARGS:-}
 }
 
