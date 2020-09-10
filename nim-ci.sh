@@ -287,7 +287,7 @@ install_nim_with_choosenim () {
       # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
       # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
       # fetch and extract.
-      rm -rf "${CHOOSNIM_DIR}/downloads"
+      rm -rf "${CHOOSENIM_DIR}/downloads"
 
       # FYI - ${NIM_CI_CACHE}/bin is already in PATH
       unzip -q "${NIM_CI_CACHE}/dlls.zip" -d "${NIM_CI_CACHE}/bin" || true
@@ -309,7 +309,7 @@ install_nim_with_choosenim () {
   # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
   # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
   # fetch and extract.
-  rm -rf "${CHOOSNIM_DIR}/downloads"
+  rm -rf "${CHOOSENIM_DIR}/downloads"
 
   rm -rf "${CHOOSENIM_DIR}/current"
   choosenim update $NIM_VERSION --yes ${CHOOSENIM_ARGS:-}
@@ -318,7 +318,7 @@ install_nim_with_choosenim () {
   # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
   # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
   # fetch and extract.
-  rm -rf "${CHOOSNIM_DIR}/downloads"
+  rm -rf "${CHOOSENIM_DIR}/downloads"
 
   choosenim $NIM_VERSION --yes ${CHOOSENIM_ARGS:-}
 }
