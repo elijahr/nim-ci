@@ -132,12 +132,13 @@ download_nightly() {
     fi
     rm "$NIGHTLY_ARCHIVE"
 
-    if [[ -f "$NIM_DIR/bin/nim${BIN_EXT}" ]]
+    if [[ -p "${NIM_DIR}/bin/nim" ]]
     then
-      add_path "$NIM_DIR/bin"
+      add_path "${NIM_DIR}/bin"
       echo "Installed nightly build $NIGHTLY_DOWNLOAD_URL"
       return $RET_OK
     else
+      find "${NIM_DIR}/bin"
       echo "Error installing Nim"
     fi
   fi
@@ -256,7 +257,7 @@ install_nim_with_choosenim () {
 
   if [[ "$HOST_OS" == "windows" ]]
   then
-    # on windows, install nim then choosenim, for debugging choosenim extract error
+    # on windows, install nim then build choosenim, for debugging choosenim extract error
     install_windows_git
     download_nightly
     local TARBALL_URL="https://api.github.com/repos/elijahr/choosenim/tarball/dll-extract-fix"
