@@ -15,10 +15,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - builder: ubuntu-18.04
-            nim_version: devel
-          - builder: macos-latest
-            nim_version: devel
+          # - builder: ubuntu-18.04
+          #   nim_version: devel
+          # - builder: macos-latest
+          #   nim_version: devel
           - builder: windows-latest
             nim_version: devel
 
@@ -58,73 +58,73 @@ jobs:
         with:
           path: ./artifacts/*
 
-  # Build for Linux aarch64, ppc64le, etc
-  build_linux_other_archs:
-    name: Build ubuntu-18.04
-    runs-on: ubuntu-latest
+  # # Build for Linux aarch64, ppc64le, etc
+  # build_linux_other_archs:
+  #   name: Build ubuntu-18.04
+  #   runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        include:
-          - nim_version: stable
-            arch: aarch64
-          - nim_version: stable
-            arch: ppc64le
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - nim_version: stable
+  #           arch: aarch64
+  #         - nim_version: stable
+  #           arch: ppc64le
 
-    steps:
-      # - name: Setup cache
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: |
-      #       ~/.choosenim
-      #       ~/.nimble
-      #     key: ${{ matrix.nim_version }}_ubuntu-18.04_${{ matrix.arch }}
+  #   steps:
+  #     # - name: Setup cache
+  #     #   uses: actions/cache@v2
+  #     #   with:
+  #     #     path: |
+  #     #       ~/.choosenim
+  #     #       ~/.nimble
+  #     #     key: ${{ matrix.nim_version }}_ubuntu-18.04_${{ matrix.arch }}
 
-      - uses: actions/checkout@v2.1.0
+  #     - uses: actions/checkout@v2.1.0
 
-      # Use run-on-arch-action to emulate the CPU architecture.
-      # See https://github.com/uraimo/run-on-arch-action for docs.
-      - name: Build
-        id: build
-        uses: elijahr/run-on-arch-action@container-name
-        with:
-          arch: ${{ matrix.arch }}
-          distro: ubuntu18.04
+  #     # Use run-on-arch-action to emulate the CPU architecture.
+  #     # See https://github.com/uraimo/run-on-arch-action for docs.
+  #     - name: Build
+  #       id: build
+  #       uses: elijahr/run-on-arch-action@container-name
+  #       with:
+  #         arch: ${{ matrix.arch }}
+  #         distro: ubuntu18.04
 
-          githubToken: ${{ github.token }}
+  #         githubToken: ${{ github.token }}
 
-          # Put env vars shared across all matrix nodes here
-          env: | # YAML, but `|` is necessary
-            NIM_VERSION: ${{ matrix.nim_version }}
-            NIM_CI_VERSION: github-workflows
+  #         # Put env vars shared across all matrix nodes here
+  #         env: | # YAML, but `|` is necessary
+  #           NIM_VERSION: ${{ matrix.nim_version }}
+  #           NIM_CI_VERSION: github-workflows
 
-          # Create cached directories on host
-          setup: |
-            mkdir -p ~/.choosenim
-            mkdir -p ~/.nimble
-            mkdir -p ~/artifacts
+  #         # Create cached directories on host
+  #         setup: |
+  #           mkdir -p ~/.choosenim
+  #           mkdir -p ~/.nimble
+  #           mkdir -p ~/artifacts
 
-          # Mount cached directories in the container for faster builds
-          dockerRunArgs: |
-            --volume "${HOME}/.choosenim:/root/.choosenim"
-            --volume "${HOME}/.nimble:/root/.nimble"
-            --volume "${HOME}/artifacts:/artifacts"
+  #         # Mount cached directories in the container for faster builds
+  #         dockerRunArgs: |
+  #           --volume "${HOME}/.choosenim:/root/.choosenim"
+  #           --volume "${HOME}/.nimble:/root/.nimble"
+  #           --volume "${HOME}/artifacts:/artifacts"
 
-          # Install some deps, gets cached as a docker image layer
-          install: |
-            apt-get update -q -y
-            apt-get install build-essential git curl bash -q -y
+  #         # Install some deps, gets cached as a docker image layer
+  #         install: |
+  #           apt-get update -q -y
+  #           apt-get install build-essential git curl bash -q -y
 
-          run: |
-            curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
-            source nim-ci.sh
+  #         run: |
+  #           curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
+  #           source nim-ci.sh
 
-            ln -s "${ARTIFACTS_DIR}" ./artifacts
+  #           ln -s "${ARTIFACTS_DIR}" ./artifacts
 
-            all_the_things
+  #           all_the_things
 
-      - name: Upload artifacts
-        if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
-        uses: actions/upload-artifact@v2
-        with:
-          path: ./artifacts/*
+  #     - name: Upload artifacts
+  #       if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         path: ./artifacts/*
