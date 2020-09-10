@@ -29,13 +29,13 @@ jobs:
           fetch-depth: 1
           submodules: recursive
 
-      - name: Setup cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.choosenim
-            ~/.nimble
-          key: ${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
+      # - name: Setup cache
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: |
+      #       ~/.choosenim
+      #       ~/.nimble
+      #     key: ${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
 
       - name: Install & build
         id: build
@@ -72,13 +72,13 @@ jobs:
             arch: ppc64le
 
     steps:
-      - name: Setup cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.choosenim
-            ~/.nimble
-          key: ${{ matrix.nim_version }}_ubuntu-18.04_${{ matrix.arch }}
+      # - name: Setup cache
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: |
+      #       ~/.choosenim
+      #       ~/.nimble
+      #     key: ${{ matrix.nim_version }}_ubuntu-18.04_${{ matrix.arch }}
 
       - uses: actions/checkout@v2.1.0
 
