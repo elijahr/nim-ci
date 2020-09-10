@@ -10,6 +10,6 @@ source ../nim-ci.sh
 add_path /some/path
 assert "${PATH:0:11}" == "/some/path:"
 
-GITHUB_WORKFLOW="some-workflow"
+GITHUB_ACTIONS="true"
 OUTPUT=$(add_path /some/other/path)
 assert "$OUTPUT" == "::add-path::/some/other/path"
