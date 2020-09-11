@@ -138,7 +138,7 @@ download_nightly() {
       echo "Installed nightly build $NIGHTLY_DOWNLOAD_URL"
       return $RET_OK
     else
-      find "${NIM_DIR}/bin"
+      find "${NIM_DIR}" || echo "No such thing: $NIM_DIR"
       echo "Error installing Nim"
     fi
   fi
