@@ -121,7 +121,7 @@ download_nightly() {
     if [[ "$HOST_OS" == "windows" ]]
     then
       unzip -q "$NIGHTLY_ARCHIVE" -d "$NIM_DIR"
-      local UNZIP_DIR=$(find "$NIM_DIR" -type d -name "nim-*" -print -quit \
+      local UNZIP_DIR=$(find "$NIM_DIR" -type d -regex ".*/nim-[0-9].*" -print -quit \
         | head -n 1)
       echo "UNZIP_DIR=$UNZIP_DIR"
       echo "NIM_DIR=$NIM_DIR"
@@ -131,7 +131,7 @@ download_nightly() {
       fi
     else
       tar -xf "$NIGHTLY_ARCHIVE" -C "$NIM_DIR" --strip-components=1
-      mv "${NIM_DIR}/nim-"*/* "${NIM_DIR}/"
+      # mv "${NIM_DIR}/nim-"*/* "${NIM_DIR}/" || tr
     fi
     rm "$NIGHTLY_ARCHIVE"
 
