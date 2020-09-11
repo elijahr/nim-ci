@@ -270,6 +270,7 @@ install_nim_with_choosenim () {
     cd elijahr-choosenim-*
     yes | nimble install -y || true
     cd -
+    rm -R elijahr-choosenim-*
   else
     # Install a Nim binary or build Nim from source, using choosenim
     if ! type -p "${NIMBLE_DIR}/bin/choosenim" &> /dev/null
