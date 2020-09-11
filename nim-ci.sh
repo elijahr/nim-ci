@@ -258,20 +258,20 @@ install_nim_with_choosenim () {
   add_path "${CHOOSENIM_DIR}/bin"
 
 
-  if [[ "$HOST_OS" == "windows" ]]
-  then
-    # on windows, install nim then build choosenim, for debugging choosenim extract error
-    install_windows_git
-    download_nightly
-    local TARBALL_URL="https://api.github.com/repos/elijahr/choosenim/tarball/dll-extract-fix"
-    eval curl "$TARBALL_URL" $(github_api_curl_args) -LsSf -o choosenim.tar.gz
-    tar -xzf choosenim.tar.gz
-    rm choosenim.tar.gz
-    cd elijahr-choosenim-*
-    yes | nimble install -y || true
-    cd -
-    rm -R elijahr-choosenim-*
-  else
+  # if [[ "$HOST_OS" == "windows" ]]
+  # then
+  #   # on windows, install nim then build choosenim, for debugging choosenim extract error
+  #   install_windows_git
+  #   download_nightly
+  #   local TARBALL_URL="https://api.github.com/repos/elijahr/choosenim/tarball/dll-extract-fix"
+  #   eval curl "$TARBALL_URL" $(github_api_curl_args) -LsSf -o choosenim.tar.gz
+  #   tar -xzf choosenim.tar.gz
+  #   rm choosenim.tar.gz
+  #   cd elijahr-choosenim-*
+  #   yes | nimble install -y || true
+  #   cd -
+  #   rm -R elijahr-choosenim-*
+  # else
     # Install a Nim binary or build Nim from source, using choosenim
     if ! type -p "${NIMBLE_DIR}/bin/choosenim" &> /dev/null
     then
@@ -313,7 +313,7 @@ install_nim_with_choosenim () {
     else
       echo "choosenim already installed"
     fi
-  fi
+  # fi
 
   if [[ ! -f "${NIMBLE_DIR}/bin/choosenim" && \
         "${NIMBLE_DIR}" != "${HOME}/.nimble" ]]
