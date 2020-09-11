@@ -135,7 +135,7 @@ download_nightly() {
     fi
     rm "$NIGHTLY_ARCHIVE"
 
-    if [[ -p "${NIM_DIR}/bin/nim" ]]
+    if [[ -p "${NIM_DIR}/bin/nim${BIN_EXT}" ]]
     then
       add_path "${NIM_DIR}/bin"
       echo "Installed nightly build $NIGHTLY_DOWNLOAD_URL"
