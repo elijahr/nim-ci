@@ -129,6 +129,7 @@ download_nightly() {
       fi
     else
       tar -xf "$NIGHTLY_ARCHIVE" -C "$NIM_DIR" --strip-components=1
+      mv "${NIM_DIR}/nim-"*/* "${NIM_DIR}/"
     fi
     rm "$NIGHTLY_ARCHIVE"
 
