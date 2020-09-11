@@ -135,7 +135,7 @@ download_nightly() {
     fi
     rm "$NIGHTLY_ARCHIVE"
 
-    if [[ -p "${NIM_DIR}/bin/nim${BIN_EXT}" ]]
+    if type -p "${NIM_DIR}/bin/nim${BIN_EXT}" &> /dev/null
     then
       add_path "${NIM_DIR}/bin"
       echo "Installed nightly build $NIGHTLY_DOWNLOAD_URL"
@@ -221,7 +221,7 @@ install_nim_nightly_or_build_nim () {
   mkdir -p "$NIM_DIR"
 
   add_path "${NIM_DIR}/bin"
-  if type -p "${NIM_DIR}/bin/nim" &> /dev/null
+  if type -p "${NIM_DIR}/bin/nim${BIN_EXT}" &> /dev/null
   then
     # TODO - pull/rebuild devel?
     echo "Using cached Nim ${NIM_DIR}/bin/nim"
