@@ -268,7 +268,7 @@ install_nim_with_choosenim () {
     tar -xzf choosenim.tar.gz
     rm choosenim.tar.gz
     cd elijahr-choosenim-*
-    nimble install -y
+    yes | nimble install -y || true
     cd -
   else
     # Install a Nim binary or build Nim from source, using choosenim
