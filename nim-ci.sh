@@ -123,6 +123,8 @@ download_nightly() {
       unzip -q "$NIGHTLY_ARCHIVE" -d "$NIM_DIR"
       local UNZIP_DIR=$(find "$NIM_DIR" -type d -name "nim-*" -print -quit \
         | head -n 1)
+      echo "UNZIP_DIR=$UNZIP_DIR"
+      echo "NIM_DIR=$NIM_DIR"
       if [[ ! -z "$UNZIP_DIR" ]]
       then
         mv "$UNZIP_DIR"/* "$NIM_DIR/"
