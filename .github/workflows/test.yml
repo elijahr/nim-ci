@@ -29,9 +29,9 @@ jobs:
       - name: Install dependencies
         id: deps
         run: |
-          apt-get update -q -y
-          apt-get install git curl build-essential ccache -q -y
-          /usr/sbin/update-ccache-symlinks
+          sudo apt-get update -q -y
+          sudo apt-get install git curl build-essential ccache -q -y
+          sudo /usr/sbin/update-ccache-symlinks
           echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
 
       - name: Run tests
