@@ -26,14 +26,6 @@ jobs:
           fetch-depth: 1
           submodules: recursive
 
-      - name: Install dependencies
-        id: deps
-        run: |
-          sudo apt-get update -q -y
-          sudo apt-get install git curl build-essential ccache -q -y
-          sudo /usr/sbin/update-ccache-symlinks
-          echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
-
       - name: Run tests
         id: test
         env:
