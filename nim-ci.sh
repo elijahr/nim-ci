@@ -113,9 +113,9 @@ download_nightly() {
     local NIGHTLY_ARCHIVE=""
   fi
 
-  local NIM_DIR="${CHOOSENIM_DIR}/toolchains/nim-#devel"
   if [[ ! -z "$NIGHTLY_ARCHIVE" && -f "$NIGHTLY_ARCHIVE" ]]
   then
+    local NIM_DIR="${CHOOSENIM_DIR}/toolchains/nim-#devel"
     rm -Rf "$NIM_DIR"
     mkdir -p "$NIM_DIR"
     if [[ "$HOST_OS" == "windows" ]]
