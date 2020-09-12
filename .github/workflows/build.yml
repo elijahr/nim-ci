@@ -133,6 +133,17 @@ jobs:
 
             all_the_things
 
+      - name: Fix cache permissions
+        run: |
+          chmod -R 777 ~/.cache
+          chown -R $(whoami) ~/.cache
+          chmod -R 777 ~/.ccache
+          chown -R $(whoami) ~/.ccache
+          chmod -R 777 ~/.choosenim
+          chown -R $(whoami) ~/.choosenim
+          chmod -R 777 ~/.nimble
+          chown -R $(whoami) ~/.nimble
+
       - name: Upload artifacts
         if: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v2
