@@ -15,8 +15,8 @@ jobs:
     strategy:
       matrix:
         include:
-          # - builder: ubuntu-18.04
-          # - builder: macos-latest
+          - builder: ubuntu-18.04
+          - builder: macos-latest
           - builder: windows-latest
 
     steps:
