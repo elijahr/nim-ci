@@ -8,60 +8,71 @@ on:
     branches: [ '*' ]
 
 jobs:
-  test_amd64:
-    name: Test ${{ matrix.builder }} x86_64
-    runs-on: ${{ matrix.builder }}
+  # test_amd64:
+  #   name: Test ${{ matrix.builder }} x86_64
+  #   runs-on: ${{ matrix.builder }}
 
-    strategy:
-      matrix:
-        include:
-          - builder: ubuntu-18.04
-          - builder: macos-latest
-          - builder: windows-latest
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - builder: ubuntu-18.04
+  #         - builder: macos-latest
+  #         - builder: windows-latest
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
-          submodules: recursive
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 1
+  #         submodules: recursive
 
-      - name: Setup cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache
-          key: test_${{ matrix.builder }}_x86_64
+  #     - name: Setup cache
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           ~/.cache
+  #         key: test_${{ matrix.builder }}_x86_64
 
-      - name: Run tests
-        id: test
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          NIM_CI_TEST_FULL_CLEAN: yes
-        run: |
-          bash ./tests/run.sh
+  #     - name: Run tests
+  #       id: test
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.token }}
+  #         NIM_CI_TEST_FULL_CLEAN: yes
+  #       run: |
+  #         bash ./tests/run.sh
 
   # Build for Linux aarch64, ppc64le, etc
   test_linux_other_archs:
     name: Test ubuntu-18.04 ${{ matrix.arch }}
     runs-on: ubuntu-latest
 
+    services:
+      distcc-host:
+        image: docker.pkg.github.com/elijahr/distcc-multi-arch/distcc-host:latest
+        ports:
+          # distccd for cross-compiling aarch64-linux-gnu listens on 3632
+          - 3632:3632
+          # distccd for cross-compiling powerpc64le-linux-gnu listens on 3632
+          - 3633:3633
+
     strategy:
       matrix:
         include:
           - arch: aarch64
-          - arch: ppc64le
+            distcc_hosts: distccd:3632
+          # - arch: ppc64le
+          #   distcc_hosts: distccd:3633
 
     steps:
       - uses: actions/checkout@v2.1.0
 
-      - name: Setup cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache
-            ~/.ccache
-          key: test_ubuntu-18.04_${{ matrix.arch }}
+      # - name: Setup cache
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: |
+      #       ~/.cache
+      #       ~/.ccache
+      #     key: test_ubuntu-18.04_${{ matrix.arch }}
 
       - name: Run tests
         id: test
@@ -71,31 +82,35 @@ jobs:
           distro: ubuntu18.04
           githubToken: ${{ github.token }}
           env: |
+            DISTCC_HOSTS: ${{ matrix.distcc_hosts }}
             GITHUB_TOKEN: ${{ github.token }}
             NIM_CI_TEST_FULL_CLEAN: yes
 
           # Create cached/volume directories on host
-          setup: |
-            mkdir -p ~/.cache
-            mkdir -p ~/.ccache
+          # setup: |
+          #   mkdir -p ~/.cache
 
           # Mount cached directories in the container for faster builds
-          dockerRunArgs: |
-            --volume "${HOME}/.cache:/root/.cache"
-            --volume "${HOME}/.ccache:/root/.ccache"
+          # dockerRunArgs: |
+          #   --volume "${HOME}/.cache:/root/.cache"
 
           install: |
             apt-get update -q -y
-            apt-get install git curl build-essential ccache -q -y
-            /usr/sbin/update-ccache-symlinks
-            echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
+            apt-get install git curl build-essential distcc -q -y
+            apt-get clean
+
+            # Put distcc client wrappers first in PATH
+            echo "export PATH=/usr/lib/distcc:$PATH" >> ~/.bashrc
+
+            # distcc provides gcc and g++ wrappers, but not cc, so create an additional symlink
+            ln -s /usr/bin/distcc /usr/lib/distcc/cc
 
           run: |
             bash ./tests/run.sh
 
-      - name: Fix cache permissions
-        run: |
-          chmod -R 777 ~/.cache
-          chown -R $(whoami) ~/.cache
-          chmod -R 777 ~/.ccache
-          chown -R $(whoami) ~/.ccache
+      # - name: Fix cache permissions
+      #   run: |
+      #     chmod -R 777 ~/.cache
+      #     chown -R $(whoami) ~/.cache
+      #     chmod -R 777 ~/.ccache
+      #     chown -R $(whoami) ~/.ccache
