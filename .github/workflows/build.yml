@@ -33,6 +33,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
+            ~/.cache
             ~/.choosenim
             ~/.nimble
           key: build_nim-${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
@@ -103,6 +104,7 @@ jobs:
 
           # Create cached/volume directories on host
           setup: |
+            mkdir -p ~/.cache
             mkdir -p ~/.ccache
             mkdir -p ~/.choosenim
             mkdir -p ~/.nimble
@@ -110,6 +112,7 @@ jobs:
 
           # Mount cached directories in the container for faster builds
           dockerRunArgs: |
+            --volume "${HOME}/.cache:/root/.cache"
             --volume "${HOME}/.ccache:/root/.ccache"
             --volume "${HOME}/.choosenim:/root/.choosenim"
             --volume "${HOME}/.nimble:/root/.nimble"

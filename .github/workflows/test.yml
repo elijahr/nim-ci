@@ -26,6 +26,13 @@ jobs:
           fetch-depth: 1
           submodules: recursive
 
+      - name: Setup cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache
+          key: test_${{ matrix.builder }}_x86_64
+
       - name: Run tests
         id: test
         env:
@@ -52,6 +59,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
+            ~/.cache
             ~/.ccache
           key: test_ubuntu-18.04_${{ matrix.arch }}
 
@@ -68,10 +76,12 @@ jobs:
 
           # Create cached/volume directories on host
           setup: |
+            mkdir -p ~/.cache
             mkdir -p ~/.ccache
 
           # Mount cached directories in the container for faster builds
           dockerRunArgs: |
+            --volume "${HOME}/.cache:/root/.cache"
             --volume "${HOME}/.ccache:/root/.ccache"
 
           install: |
