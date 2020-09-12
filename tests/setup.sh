@@ -14,7 +14,6 @@ RET_SKIP=2
 ASSERT_FAILED=0
 
 TMP_DIR="$(mktemp -d ${TMPDIR:-'/tmp'}/nim-ci-XXXXXXX)"
-echo "TMP_DIR=${TMP_DIR}"
 CHOOSENIM_DIR="${TMP_DIR}/choosenim"
 NIMBLE_DIR="${TMP_DIR}/nimble"
 PATH="${NIMBLE_DIR}/bin:$PATH"
