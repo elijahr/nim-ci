@@ -98,7 +98,7 @@ jobs:
           env: | # YAML, but `|` is necessary
             GITHUB_TOKEN: ${{ github.token }}
             NIM_VERSION: ${{ matrix.nim_version }}
-            NIM_CI_VERSION: github-workflows
+            # NIM_CI_VERSION: github-workflows
 
           # Create cached/volume directories on host
           setup: |
@@ -116,11 +116,11 @@ jobs:
           install: |
             apt-get update -q -y
             apt-get install build-essential git curl bash -q -y
-            curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
-            [[ "${NIM_VERSION:-}" != "devel" ]] && source nim-ci.sh
+            curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/nim-ci.sh -LsSf > nim-ci.sh
+            [[ "$NIM_VERSION" != "devel" ]] && source nim-ci.sh
 
           run: |
-            [[ "${NIM_VERSION:-}" == "devel" ]] && source nim-ci.sh
+            source nim-ci.sh
 
             ln -s "${ARTIFACTS_DIR}" ./artifacts
 
