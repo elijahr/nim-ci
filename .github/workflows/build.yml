@@ -77,6 +77,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
+            ~/.ccache
             ~/.choosenim
             ~/.nimble
           key: build_nim-${{ matrix.nim_version }}_ubuntu-18.04_${{ matrix.arch }}
@@ -102,12 +103,14 @@ jobs:
 
           # Create cached/volume directories on host
           setup: |
+            mkdir -p ~/.ccache
             mkdir -p ~/.choosenim
             mkdir -p ~/.nimble
             mkdir -p ~/artifacts
 
           # Mount cached directories in the container for faster builds
           dockerRunArgs: |
+            --volume "${HOME}/.ccache:/root/.ccache"
             --volume "${HOME}/.choosenim:/root/.choosenim"
             --volume "${HOME}/.nimble:/root/.nimble"
             --volume "${HOME}/artifacts:/artifacts"
@@ -115,7 +118,9 @@ jobs:
           # Install some deps, gets cached as a docker image layer
           install: |
             apt-get update -q -y
-            apt-get install build-essential git curl bash -q -y
+            apt-get install git curl build-essential ccache -q -y
+            /usr/sbin/update-ccache-symlinks
+            echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
 
           run: |
             curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
