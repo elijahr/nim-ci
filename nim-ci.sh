@@ -258,62 +258,47 @@ install_nim_with_choosenim () {
   add_path "${CHOOSENIM_DIR}/bin"
 
 
-  # if [[ "$HOST_OS" == "windows" ]]
-  # then
-  #   # on windows, install nim then build choosenim, for debugging choosenim extract error
-  #   install_windows_git
-  #   download_nightly
-  #   local TARBALL_URL="https://api.github.com/repos/elijahr/choosenim/tarball/dll-extract-fix"
-  #   eval curl "$TARBALL_URL" $(github_api_curl_args) -LsSf -o choosenim.tar.gz
-  #   tar -xzf choosenim.tar.gz
-  #   rm choosenim.tar.gz
-  #   cd elijahr-choosenim-*
-  #   yes | nimble install -y || true
-  #   cd -
-  #   rm -R elijahr-choosenim-*
-  # else
-    # Install a Nim binary or build Nim from source, using choosenim
-    if ! type -p "${NIMBLE_DIR}/bin/choosenim" &> /dev/null
+  # Install a Nim binary or build Nim from source, using choosenim
+  if ! type -p "${NIMBLE_DIR}/bin/choosenim" &> /dev/null
+  then
+    echo "Installing choosenim"
+    if [[ "$HOST_OS" == "windows" ]]
     then
-      echo "Installing choosenim"
-      if [[ "$HOST_OS" == "windows" ]]
-      then
-        install_windows_git
-      fi
-
-      # curl https://nim-lang.org/choosenim/init.sh -sSf -o choosenim-init.sh
-      if [[ ! -f "${NIM_CI_CACHE}/choosenim-init.sh" ]]
-      then
-        curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/choosenim-init.sh \
-          -LsSf -o "${NIM_CI_CACHE}/choosenim-init.sh"
-      fi
-      sh "${NIM_CI_CACHE}/choosenim-init.sh" -y
-
-      if [[ "$HOST_OS" == "windows" ]]
-      then
-        # Workaround for error in choosenim on GitHub Actions windows-latest:
-        # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
-        # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
-        # fetch and extract.
-        if [[ ! -f "${NIM_CI_CACHE}/dlls.zip" ]]
-        then
-          curl http://nim-lang.org/download/dlls.zip -LsSf -o "${NIM_CI_CACHE}/dlls.zip"
-        fi
-
-        # Workaround for error in choosenim on GitHub Actions windows-latest:
-        # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
-        # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
-        # fetch and extract.
-        rm -rf "${CHOOSENIM_DIR}/downloads"
-
-        # FYI - ${NIM_CI_CACHE}/bin is already in PATH
-        unzip -q "${NIM_CI_CACHE}/dlls.zip" -d "${NIM_CI_CACHE}/bin" || true
-      fi
-      echo "Installed choosenim"
-    else
-      echo "choosenim already installed"
+      install_windows_git
     fi
-  # fi
+
+    # curl https://nim-lang.org/choosenim/init.sh -sSf -o choosenim-init.sh
+    if [[ ! -f "${NIM_CI_CACHE}/choosenim-init.sh" ]]
+    then
+      curl https://raw.githubusercontent.com/elijahr/nim-ci/github-workflows/choosenim-init.sh \
+        -LsSf -o "${NIM_CI_CACHE}/choosenim-init.sh"
+    fi
+    sh "${NIM_CI_CACHE}/choosenim-init.sh" -y
+
+    if [[ "$HOST_OS" == "windows" ]]
+    then
+      # Workaround for error in choosenim on GitHub Actions windows-latest:
+      # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
+      # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
+      # fetch and extract.
+      if [[ ! -f "${NIM_CI_CACHE}/dlls.zip" ]]
+      then
+        curl http://nim-lang.org/download/dlls.zip -LsSf -o "${NIM_CI_CACHE}/dlls.zip"
+      fi
+
+      # Workaround for error in choosenim on GitHub Actions windows-latest:
+      # 'Unable to extract. Error was 'Cannot create a file when that file already exists.'
+      # We pre-fetch the DLLs and add them to PATH so choosenim doesn't try to
+      # fetch and extract.
+      rm -rf "${CHOOSENIM_DIR}/downloads"
+
+      # FYI - ${NIM_CI_CACHE}/bin is already in PATH
+      unzip -q "${NIM_CI_CACHE}/dlls.zip" -d "${NIM_CI_CACHE}/bin" || true
+    fi
+    echo "Installed choosenim"
+  else
+    echo "choosenim already installed"
+  fi
 
   if [[ ! -f "${NIMBLE_DIR}/bin/choosenim" && \
         "${NIMBLE_DIR}" != "${HOME}/.nimble" ]]
@@ -548,11 +533,13 @@ init () {
     1|y|yes|true) export USE_CHOOSENIM="yes" ;;
     0|n|no|false) export USE_CHOOSENIM="no" ;;
     auto)
-      # Autodetect whether to use choosenim or build Nim from source, based on
-      # architecture
-      case "$HOST_CPU" in
-        amd64) export USE_CHOOSENIM="yes" ;;
-        # choosenim doesn't have binaries for non-amd64 yet
+      # Autodetect whether to use choosenim or build Nim from sourc
+      if [[ "$HOST_CPU" == "amd64" && "$HOST_OS" != "windows" ]]
+      then
+        export USE_CHOOSENIM="yes"
+      else
+        # choosenim doesn't have binaries or doesn't behave properly on this
+        # arch/os
         *) export USE_CHOOSENIM="no" ;;
       esac
       ;;
