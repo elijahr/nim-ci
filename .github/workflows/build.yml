@@ -29,18 +29,19 @@ jobs:
           fetch-depth: 1
           submodules: recursive
 
-      # - name: Setup cache
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: |
-      #       ~/.choosenim
-      #       ~/.nimble
-      #     key: ${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
+      - name: Setup cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.choosenim
+            ~/.nimble
+          key: build_nim-${{ matrix.nim_version }}_${{ matrix.builder }}_x86_64
 
       - name: Install & build
         id: build
         env:
           # Put env vars shared across all matrices here
+          GITHUB_TOKEN: ${{ github.token }}
           NIM_VERSION: ${{ matrix.nim_version }}
           NIM_CI_VERSION: github-workflows # or vX.Y.Z to lock to a specific nim-ci version
         shell: bash
@@ -72,13 +73,13 @@ jobs:
             arch: ppc64le
 
     steps:
-      # - name: Setup cache
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: |
-      #       ~/.choosenim
-      #       ~/.nimble
-      #     key: ${{ matrix.nim_version }}_ubuntu-18.04_${{ matrix.arch }}
+      - name: Setup cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.choosenim
+            ~/.nimble
+          key: build_nim-${{ matrix.nim_version }}_ubuntu-18.04_${{ matrix.arch }}
 
       - uses: actions/checkout@v2.1.0
 
@@ -95,10 +96,11 @@ jobs:
 
           # Put env vars shared across all matrix nodes here
           env: | # YAML, but `|` is necessary
+            GITHUB_TOKEN: ${{ github.token }}
             NIM_VERSION: ${{ matrix.nim_version }}
             NIM_CI_VERSION: github-workflows
 
-          # Create cached directories on host
+          # Create cached/volume directories on host
           setup: |
             mkdir -p ~/.choosenim
             mkdir -p ~/.nimble
@@ -114,18 +116,11 @@ jobs:
           install: |
             apt-get update -q -y
             apt-get install build-essential git curl bash -q -y
-            if [[ "${NIM_VERSION:-}" != "devel" ]]
-            then
-              curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
-              source nim-ci.sh
-            fi
+            curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
+            [[ "${NIM_VERSION:-}" != "devel" ]] && source nim-ci.sh
 
           run: |
-            if [[ "${NIM_VERSION:-}" == "devel" ]]
-            then
-              curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
-              source nim-ci.sh
-            fi
+            [[ "${NIM_VERSION:-}" == "devel" ]] && source nim-ci.sh
 
             ln -s "${ARTIFACTS_DIR}" ./artifacts
 

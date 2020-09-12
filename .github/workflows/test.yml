@@ -26,6 +26,14 @@ jobs:
           fetch-depth: 1
           submodules: recursive
 
+      - name: Install dependencies
+        id: deps
+        run: |
+          apt-get update -q -y
+          apt-get install git curl build-essential ccache -q -y
+          /usr/sbin/update-ccache-symlinks
+          echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
+
       - name: Run tests
         id: test
         env:
@@ -47,6 +55,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2.1.0
+
+      - name: Setup cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.ccache
+          key: test_ubuntu-18.04_${{ matrix.arch }}
+
       - name: Run tests
         id: test
         uses: elijahr/run-on-arch-action@container-name
@@ -57,8 +73,20 @@ jobs:
           env: |
             GITHUB_TOKEN: ${{ github.token }}
             NIM_CI_TEST_FULL_CLEAN: yes
+
+          # Create cached/volume directories on host
+          setup: |
+            mkdir -p ~/.ccache
+
+          # Mount cached directories in the container for faster builds
+          dockerRunArgs: |
+            --volume "${HOME}/.ccache:/root/.ccache"
+
           install: |
             apt-get update -q -y
-            apt-get install git curl build-essential -q -y
+            apt-get install git curl build-essential ccache -q -y
+            /usr/sbin/update-ccache-symlinks
+            echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
+
           run: |
             bash ./tests/run.sh
