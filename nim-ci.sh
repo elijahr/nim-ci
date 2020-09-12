@@ -540,8 +540,8 @@ init () {
       else
         # choosenim doesn't have binaries or doesn't behave properly on this
         # arch/os
-        *) export USE_CHOOSENIM="no" ;;
-      esac
+        export USE_CHOOSENIM="no"
+      fi
       ;;
     *)
       echo "Unknown value for USE_CHOOSENIM: $USE_CHOOSENIM"
