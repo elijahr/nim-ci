@@ -114,10 +114,18 @@ jobs:
           install: |
             apt-get update -q -y
             apt-get install build-essential git curl bash -q -y
+            if [[ "${NIM_VERSION:-}" != "devel" ]]
+            then
+              curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
+              source nim-ci.sh
+            fi
 
           run: |
-            curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
-            source nim-ci.sh
+            if [[ "${NIM_VERSION:-}" == "devel" ]]
+            then
+              curl https://raw.githubusercontent.com/elijahr/nim-ci/${NIM_CI_VERSION}/nim-ci.sh -LsSf > nim-ci.sh
+              source nim-ci.sh
+            fi
 
             ln -s "${ARTIFACTS_DIR}" ./artifacts
 
