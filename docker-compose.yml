@@ -1,0 +1,23 @@
+version: '3'
+services:
+  distcc-host:
+    image: docker.pkg.github.com/elijahr/distcc-multi-arch/distcc-host:latest
+    ports:
+      # distccd for cross-compiling aarch64-linux-gnu listens on 3632
+      - 3632:3632
+      # distccd for cross-compiling powerpc64le-linux-gnu listens on 3632
+      - 3633:3633
+
+  distcc-client-arm64:
+    image: docker.pkg.github.com/elijahr/distcc-multi-arch/distcc-client-arm64:latest
+    environment:
+      - DISTCC_HOSTS=distcc-host:3632
+      # If distccd can't be reached, fail
+      - DISTCC_SKIP_LOCAL_RETRY=1
+
+  distcc-client-ppc64le:
+    image: docker.pkg.github.com/elijahr/distcc-multi-arch/distcc-client-ppc64le:latest
+    environment:
+      - DISTCC_HOSTS=distcc-host:3633
+      # If distccd can't be reached, fail
+      - DISTCC_SKIP_LOCAL_RETRY=1
