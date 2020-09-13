@@ -76,7 +76,7 @@ jobs:
         run: |
           PACKAGE_REGISTRY=docker.pkg.github.com/elijahr/distcc-multi-arch
           docker pull $PACKAGE_REGISTRY/distcc-host:latest
-          docker-compose up -d
+          docker-compose up -d distcc-host
 
       - name: Run tests
         id: test
