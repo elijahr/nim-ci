@@ -11,11 +11,11 @@ services:
     volumes:
       - .:/code
       - ./caches/arm64v8/ccache:/root/.ccache
-    command: ./code/tests/run.sh
+    command: [ 'bash', './code/tests/run.sh' ]
 
   distcc-client-ppc64le:
     image: elijahru/distcc-client:latest-debian-buster-ppc64le
     volumes:
       - .:/code
       - ./caches/ppc64le/ccache:/root/.ccache
-    command: ./code/tests/run.sh
+    command: [ 'bash', './code/tests/run.sh' ]
