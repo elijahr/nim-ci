@@ -13,7 +13,6 @@ services:
     volumes:
       - .:/code
       - ./caches/arm64v8/ccache:/root/.ccache
-    # command: [ 'bash', './code/tests/run.sh' ]
 
   distcc-client-ppc64le:
     build:

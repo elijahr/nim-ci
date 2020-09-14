@@ -2,4 +2,4 @@ FROM elijahru/distcc-client:latest-debian-buster-ppc64le
 
 COPY ./tests/run.sh ./code/tests/run.sh
 
-CMD ['./code/tests/run.sh']
+CMD ./code/tests/run.sh
