@@ -2,4 +2,4 @@ FROM elijahru/distcc-client:latest-debian-buster-arm64v8
 
 COPY ./* /code/
 
-CMD ./code/tests/run.sh
+CMD /code/tests/run.sh
