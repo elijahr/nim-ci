@@ -7,15 +7,18 @@ services:
       - 3636:3636 # ppc64le cross-compiler
 
   distcc-client-arm64v8:
-    image: elijahru/distcc-client:latest-debian-buster-arm64v8
+    build:
+      context: .
+      dockerfile: Dockerfile.arm64v8
     volumes:
       - .:/code
       - ./caches/arm64v8/ccache:/root/.ccache
-    command: [ 'bash', './code/tests/run.sh' ]
+    # command: [ 'bash', './code/tests/run.sh' ]
 
   distcc-client-ppc64le:
-    image: elijahru/distcc-client:latest-debian-buster-ppc64le
+    build:
+      context: .
+      dockerfile: Dockerfile.ppc64le
     volumes:
       - .:/code
       - ./caches/ppc64le/ccache:/root/.ccache
-    command: [ 'bash', './code/tests/run.sh' ]
