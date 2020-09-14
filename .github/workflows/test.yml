@@ -73,4 +73,6 @@ jobs:
         run: docker-compose up distcc-client-${{ matrix.arch }}
 
       - name: Fix cache permissions
-        run: chmod -R 777 caches && chown -R $(whoami) caches
+        run: |
+          find caches
+          # chmod -R 777 caches && chown -R $(whoami) caches
