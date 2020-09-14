@@ -1,23 +1,21 @@
 version: '3'
 services:
   distcc-host:
-    image: docker.pkg.github.com/elijahr/distcc-multi-arch/distcc-host:latest
+    image: elijahru/distcc-host:latest-debian-buster
     ports:
-      # distccd for cross-compiling aarch64-linux-gnu listens on 3632
-      - 3632:3632
-      # distccd for cross-compiling powerpc64le-linux-gnu listens on 3632
-      - 3633:3633
+      - 3635:3635 # aarch64/arm64v8 cross-compiler
+      - 3636:3636 # ppc64le cross-compiler
 
-  distcc-client-arm64:
-    image: docker.pkg.github.com/elijahr/distcc-multi-arch/distcc-client-arm64:latest
-    environment:
-      - DISTCC_HOSTS=distcc-host:3632
-      # If distccd can't be reached, fail
-      - DISTCC_SKIP_LOCAL_RETRY=1
+  distcc-client-arm64v8:
+    image: elijahru/distcc-client:latest-debian-buster-arm64v8
+    volumes:
+      - .:/code
+      - ./caches/arm64v8/ccache:/root/.ccache
+    command: ./code/tests/run.sh
 
   distcc-client-ppc64le:
-    image: docker.pkg.github.com/elijahr/distcc-multi-arch/distcc-client-ppc64le:latest
-    environment:
-      - DISTCC_HOSTS=distcc-host:3633
-      # If distccd can't be reached, fail
-      - DISTCC_SKIP_LOCAL_RETRY=1
+    image: elijahru/distcc-client:latest-debian-buster-ppc64le
+    volumes:
+      - .:/code
+      - ./caches/ppc64le/ccache:/root/.ccache
+    command: ./code/tests/run.sh
