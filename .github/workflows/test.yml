@@ -70,7 +70,7 @@ jobs:
         run: docker-compose up -d distcc-host
 
       - name: Run tests
-        run: docker-compose up distcc-client-${{ matrix.arch }}
+        run: docker-compose run distcc-client-${{ matrix.arch }}
 
       - name: Fix cache permissions
         run: |
