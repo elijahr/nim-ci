@@ -48,7 +48,7 @@ jobs:
 
     strategy:
       matrix:
-        arch: [ arm64v8, ppc64le ]
+        arch: [ i386, arm32v7, arm64v8, ppc64le ]
 
     steps:
       - uses: actions/checkout@v2.1.0
@@ -67,12 +67,12 @@ jobs:
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - name: Start distccd
-        run: docker-compose up -d distcc-host
+        run: docker-compose up -d builder
 
       - name: Run tests
-        run: docker-compose run distcc-client-${{ matrix.arch }}
+        run: docker-compose run ${{ matrix.arch }}
 
-      - name: Fix cache permissions
-        run: |
-          find caches
-          # chmod -R 777 caches && chown -R $(whoami) caches
+      # - name: Fix cache permissions
+      #   run: |
+      #     find caches
+      #     # chmod -R 777 caches && chown -R $(whoami) caches

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -euxo pipefail
 
 # return codes
 export RET_OK=0
@@ -137,7 +137,9 @@ download_nightly() {
 
     if type -p "${NIM_DIR}/bin/nim${BIN_EXT}" &> /dev/null
     then
-      add_path "${NIM_DIR}/bin"
+      rm -f ~/.active-nim
+      ln -s "${NIM_DIR}" ~/.active-nim
+      add_path ~/.active-nim/bin
       echo "Installed nightly build $NIGHTLY_DOWNLOAD_URL"
       return $RET_OK
     else
@@ -220,7 +222,10 @@ install_nim_nightly_or_build_nim () {
   local NIM_DIR="${CHOOSENIM_DIR}/toolchains/nim-${TOOLCHAIN_ID}-${HOST_CPU}"
   mkdir -p "$NIM_DIR"
 
-  add_path "${NIM_DIR}/bin"
+  rm -f ~/.active-nim
+  ln -s "${NIM_DIR}" ~/.active-nim
+  add_path ~/.active-nim/bin
+
   if type -p "${NIM_DIR}/bin/nim${BIN_EXT}" &> /dev/null
   then
     # TODO - pull/rebuild devel?
@@ -256,7 +261,6 @@ install_nim_with_choosenim () {
   mkdir -p "${NIMBLE_DIR}"
   add_path "${NIMBLE_DIR}/bin"
   add_path "${CHOOSENIM_DIR}/bin"
-
 
   # Install a Nim binary or build Nim from source, using choosenim
   if ! type -p "${NIMBLE_DIR}/bin/choosenim" &> /dev/null
