@@ -67,7 +67,7 @@ install() {
   fi
 
   # Copy choosenim binary to Nimble bin.
-  local nimbleBinDir=`"$temp_prefix/$filename" --getNimbleBin`
+  local nimbleBinDir=$("$temp_prefix/$filename" --getNimbleBin | tail -n 1)
   if [ "$platform" = "windows_amd64" ]; then
     cp "$temp_prefix/$filename" "$nimbleBinDir/."
   else
