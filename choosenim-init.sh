@@ -1,4 +1,5 @@
 #!/bin/sh
+
 # Copyright 2017 Dominik Picheta and Nim developers.
 #
 # Licensed under the BSD-3-Clause license.
@@ -6,7 +7,7 @@
 # This script performs some platform detection, downloads the latest version
 # of choosenim and initiates its installation.
 
-set -euxo pipefail
+set -eux
 
 url_prefix="https://github.com/dom96/choosenim/releases/download/"
 

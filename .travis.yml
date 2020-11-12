@@ -8,6 +8,7 @@ matrix:
     - env: NIM_VERSION=0.20.2
     - env: NIM_VERSION=1.0.8
     - env: NIM_VERSION=1.2.6
+    - env: NIM_VERSION=stable
     - env: NIM_VERSION=devel
 
     ## Uncomment to test on Linux - arm64
