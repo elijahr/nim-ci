@@ -215,7 +215,7 @@ install_nim_nightly_or_build_nim () {
     if [[ "$TOOLCHAIN_ID" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
     then
       # Strip leading v for tags
-      TOOLCHAIN_ID=$(cat "$TOOLCHAIN_ID" | sed -n 's/^v//p')
+      TOOLCHAIN_ID=$(echo "$TOOLCHAIN_ID" | sed -n 's/^v//p')
     fi
   fi
 
@@ -331,7 +331,7 @@ install_nim_with_choosenim () {
 }
 
 collect_project_metadata () {
-  # Collect and export metadata about the Nim project
+  # Collect and  4export metadata about the Nim project
 
   # Autodetect the location of the nim project if not explicitly provided
   # as either $1 or $NIM_PROJECT_DIR.
