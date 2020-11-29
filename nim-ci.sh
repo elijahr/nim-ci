@@ -553,6 +553,11 @@ init () {
       ;;
   esac
 
+  # Update CA Certificates
+  if type -p update-ca-certificates &> /dev/null
+    update-ca-certificates -f
+  fi
+
   install_nim
   if [[ "$?" != 0 ]]
   then
