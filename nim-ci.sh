@@ -555,6 +555,7 @@ init () {
 
   # Update CA Certificates
   if type -p update-ca-certificates &> /dev/null
+  then
     update-ca-certificates -f
   fi
 
